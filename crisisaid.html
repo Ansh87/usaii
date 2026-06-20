@@ -751,11 +751,14 @@ textarea#situation::placeholder { color: var(--gray-400); }
 <!-- Settings Panel -->
 <div class="settings-panel" id="settings-panel">
   <h3>⚙️ Settings</h3>
-  <label>Claude API Key (optional)</label>
-  <input type="password" id="api-key-input" placeholder="sk-ant-..." />
-  <small>Add your Anthropic API key to enable richer AI-powered need detection. Without a key, smart keyword matching is used instead.</small>
+  <label>Google Maps API Key (optional)</label>
+  <input type="password" id="api-key-input" placeholder="AIza..." />
+  <small>
+    A demo Google Maps key is already built in (Places API + Maps JavaScript API) so live results work out of the box. Swap in your own key here if you want to use a different one — get one at <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener">console.cloud.google.com</a>.
+    Tip: restrict whatever key is active to HTTP referrers for your demo domain and set a daily quota cap, since this key is visible to anyone who views this page's source.
+  </small>
   <button class="btn-save-key" onclick="saveApiKey()">Save Key</button>
-  <div class="key-status inactive" id="key-status">No API key set — using keyword matching</div>
+  <div class="key-status inactive" id="key-status">No API key set — showing demo sample programs</div>
 </div>
 
 <!-- ══════════════════════════════════════ SCREEN 1: INTAKE -->
@@ -842,6 +845,30 @@ textarea#situation::placeholder { color: var(--gray-400); }
       </div>
     </div>
 
+    <div class="urgent-banner" id="zip-banner" style="display:none; background:var(--warning-light); border-color:#fde68a">
+      <div class="urgent-banner-icon">📍</div>
+      <div>
+        <h4 style="color:var(--warning)">Limited local coverage for this ZIP</h4>
+        <p id="zip-banner-text" style="color:#78350f"></p>
+      </div>
+    </div>
+
+    <div class="urgent-banner" id="live-banner" style="display:none; background:var(--success-light); border-color:#bbf7d0">
+      <div class="urgent-banner-icon">🔎</div>
+      <div>
+        <h4 style="color:var(--success)">Live results from Google Maps</h4>
+        <p id="live-banner-text" style="color:#14532d"></p>
+      </div>
+    </div>
+
+    <div class="urgent-banner" id="error-banner" style="display:none; background:var(--warning-light); border-color:#fde68a">
+      <div class="urgent-banner-icon">⚠️</div>
+      <div>
+        <h4 style="color:var(--warning)">Showing demo data</h4>
+        <p id="error-banner-text" style="color:#78350f"></p>
+      </div>
+    </div>
+
     <div class="filter-bar">
       <span class="results-count" id="results-count"></span>
       <div class="filter-tabs" id="filter-tabs"></div>
@@ -892,6 +919,8 @@ const CATEGORIES = {
 // confidence: "high" | "medium" | "low" | "unknown"
 // verified_days: number of days since last verified
 
+// zip_prefixes: first 3 digits of ZIP codes this program physically serves.
+// national: true means it serves everyone regardless of ZIP (statewide/federal programs).
 const PROGRAMS = [
   {
     id: 1,
@@ -907,6 +936,9 @@ const PROGRAMS = [
     phone: '(415) 555-0182',
     hours: 'Mon–Fri 9am–4pm · Sat 10am–2pm',
     address: '1240 Mission St, San Francisco, CA',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 2,
     confidence: 'high',
@@ -926,7 +958,10 @@ const PROGRAMS = [
     how_to_apply: 'Apply online at benefits.gov, call the hotline for a phone interview, or visit a county office. Bring proof of income, photo ID, and proof of address.',
     phone: '(800) 555-0322',
     hours: 'Mon–Fri 8am–5pm · Online applications 24/7',
-    address: 'County Benefits Office, 450 Golden Gate Ave',
+    address: 'County Benefits Office (location varies by county)',
+    city: 'Statewide / Nationwide',
+    zip_prefixes: [],
+    national: true,
     website: 'https://www.benefits.gov',
     verified_days: 1,
     confidence: 'high',
@@ -947,6 +982,9 @@ const PROGRAMS = [
     phone: '(415) 555-0275',
     hours: 'Mon–Fri 8:30am–4:30pm',
     address: '101 Grove St, San Francisco, CA',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 5,
     confidence: 'high',
@@ -967,6 +1005,9 @@ const PROGRAMS = [
     phone: '(415) 555-0390',
     hours: 'Mon–Fri 9am–5pm',
     address: '1815 Egbert Ave, San Francisco, CA',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 8,
     confidence: 'medium',
@@ -987,6 +1028,9 @@ const PROGRAMS = [
     phone: '311 (or direct: (415) 555-0412)',
     hours: 'Intake: 4pm–8pm · Open 24/7',
     address: '1950 Mission St, San Francisco, CA',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 4,
     confidence: 'high',
@@ -1002,11 +1046,14 @@ const PROGRAMS = [
     response_time: 'Same day',
     summary: 'Free legal advice if you\'ve received an eviction notice or are at risk of eviction.',
     provides: 'Free legal consultation, help understanding your rights, assistance responding to eviction notices, and referral to full legal representation if needed.',
-    eligibility: 'Any tenant in San Francisco facing eviction or housing instability. Income restrictions may apply for full representation.',
+    eligibility: 'Any tenant in the Bay Area facing eviction or housing instability. Income restrictions may apply for full representation.',
     how_to_apply: 'Call the hotline. A staff attorney or paralegal will answer or call back same day. Have your lease and any notices you\'ve received ready.',
     phone: '(415) 555-0560',
     hours: 'Mon–Fri 9am–5pm · Hotline staffed until 6pm',
     address: '1735 Telegraph Ave (also by phone)',
+    city: 'San Francisco / Oakland, CA',
+    zip_prefixes: ['941', '946'],
+    national: false,
     website: '#',
     verified_days: 3,
     confidence: 'high',
@@ -1027,6 +1074,9 @@ const PROGRAMS = [
     phone: '(800) 555-0199',
     hours: 'Mon–Fri 8am–5pm',
     address: 'Apply online or by phone',
+    city: 'Statewide / Nationwide',
+    zip_prefixes: [],
+    national: true,
     website: '#',
     verified_days: 12,
     confidence: 'medium',
@@ -1047,6 +1097,9 @@ const PROGRAMS = [
     phone: '(415) 555-0700',
     hours: 'Mon–Fri 8am–4:30pm (call before 3pm for same-day help)',
     address: '170 Otis St, San Francisco, CA',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 6,
     confidence: 'medium',
@@ -1067,6 +1120,9 @@ const PROGRAMS = [
     phone: '(415) 555-0321',
     hours: 'Mon–Fri 8am–6pm · Walk-in urgent care 8am–12pm',
     address: '3850 17th St, San Francisco, CA',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 7,
     confidence: 'medium',
@@ -1087,6 +1143,9 @@ const PROGRAMS = [
     phone: '(800) 555-0025',
     hours: 'Mon–Fri 8am–8pm · Sat 8am–6pm',
     address: 'Apply online or by phone',
+    city: 'Statewide / Nationwide',
+    zip_prefixes: [],
+    national: true,
     website: '#',
     verified_days: 2,
     confidence: 'high',
@@ -1107,6 +1166,9 @@ const PROGRAMS = [
     phone: '(415) 555-0480',
     hours: 'Mon–Fri 8am–5pm',
     address: '101 Grove St, San Francisco, CA',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 18,
     confidence: 'low',
@@ -1127,6 +1189,9 @@ const PROGRAMS = [
     phone: '(415) 555-0557',
     hours: 'Mon–Fri 8am–5pm',
     address: '170 Otis St, San Francisco, CA',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 14,
     confidence: 'medium',
@@ -1147,6 +1212,9 @@ const PROGRAMS = [
     phone: '(800) 300-5616',
     hours: 'Phone: Mon–Fri 8am–12pm · Online 24/7',
     address: 'Apply online at edd.ca.gov',
+    city: 'Statewide / Nationwide',
+    zip_prefixes: [],
+    national: true,
     website: 'https://www.edd.ca.gov',
     verified_days: 3,
     confidence: 'high',
@@ -1167,6 +1235,9 @@ const PROGRAMS = [
     phone: '(415) 555-0611',
     hours: 'Mon–Fri 9am–5pm',
     address: '1390 Market St, Suite 900',
+    city: 'San Francisco, CA',
+    zip_prefixes: ['941'],
+    national: false,
     website: '#',
     verified_days: 22,
     confidence: 'low',
@@ -1187,13 +1258,169 @@ const PROGRAMS = [
     phone: '(415) 555-0823',
     hours: 'Mon–Fri 9am–5pm',
     address: 'Appointments available remotely and in-person',
+    city: 'Statewide / Nationwide',
+    zip_prefixes: [],
+    national: true,
     website: '#',
     verified_days: 9,
     confidence: 'medium',
     required_docs: ['ID', 'Documents related to your legal issue', 'Proof of income'],
     tags: ['legal', 'wage-theft', 'benefits', 'free', 'civil'],
   },
+  // ── Oakland (zip prefix 946) ──
+  {
+    id: 16,
+    name: 'Oakland Emergency Food Bank',
+    org: 'Alameda County Community Food Bank',
+    category: 'food',
+    urgency: 'immediate',
+    response_time: 'Same day',
+    summary: 'Walk-in emergency groceries for any Oakland-area household, no appointment.',
+    provides: '3-day emergency food box including produce, protein, and shelf-stable goods. Available once per month per household.',
+    eligibility: 'Open to anyone in need. No income verification on first visit.',
+    how_to_apply: 'Walk in during open hours. No appointment needed.',
+    phone: '(510) 555-0188',
+    hours: 'Mon–Sat 9am–4pm',
+    address: '7900 Edgewater Dr, Oakland, CA',
+    city: 'Oakland, CA',
+    zip_prefixes: ['946'],
+    national: false,
+    website: '#',
+    verified_days: 3,
+    confidence: 'high',
+    required_docs: ['Photo ID (repeat visits only)'],
+    tags: ['food', 'emergency', 'walk-in'],
+  },
+  {
+    id: 17,
+    name: 'Oakland Emergency Shelter',
+    org: 'East Oakland Community Project',
+    category: 'housing',
+    urgency: 'immediate',
+    response_time: 'Tonight',
+    summary: 'Same-night shelter beds for individuals and families facing homelessness.',
+    provides: 'Overnight shelter, meals, case management, and help connecting to longer-term housing programs.',
+    eligibility: 'Adults and families experiencing homelessness in Alameda County.',
+    how_to_apply: 'Call the Alameda County coordinated entry line or walk in after 4pm for intake.',
+    phone: '(510) 555-0299',
+    hours: 'Intake 4pm–9pm · Open 24/7',
+    address: '8350 International Blvd, Oakland, CA',
+    city: 'Oakland, CA',
+    zip_prefixes: ['946'],
+    national: false,
+    website: '#',
+    verified_days: 5,
+    confidence: 'high',
+    required_docs: ['No ID required'],
+    tags: ['housing', 'shelter', 'homeless', 'immediate'],
+  },
+  {
+    id: 18,
+    name: 'Oakland Utility Bill Assistance',
+    org: 'Alameda County Social Services',
+    category: 'utilities',
+    urgency: 'within-week',
+    response_time: '4–6 days',
+    summary: 'Help paying overdue PG&E or EBMUD bills before shutoff.',
+    provides: 'One-time payment toward overdue electric, gas, or water bills. Average benefit $250–$700.',
+    eligibility: 'Alameda County households with income at or below 60% state median income.',
+    how_to_apply: 'Apply online or call the county social services office. Bring your most recent bill.',
+    phone: '(510) 555-0344',
+    hours: 'Mon–Fri 8:30am–5pm',
+    address: '24100 Amador St, Oakland, CA',
+    city: 'Oakland, CA',
+    zip_prefixes: ['946'],
+    national: false,
+    website: '#',
+    verified_days: 10,
+    confidence: 'medium',
+    required_docs: ['Photo ID', 'Most recent utility bill', 'Proof of income'],
+    tags: ['utilities', 'shutoff-prevention'],
+  },
+  // ── San Jose (zip prefix 951) ──
+  {
+    id: 19,
+    name: 'San Jose Community Food Closet',
+    org: 'Second Harvest of Silicon Valley',
+    category: 'food',
+    urgency: 'same-day',
+    response_time: 'Same day',
+    summary: 'Free groceries for South Bay households — drive-through and walk-up available.',
+    provides: 'Weekly grocery distribution including fresh produce, dairy, and pantry staples.',
+    eligibility: 'Open to all Santa Clara County residents in need.',
+    how_to_apply: 'Show up during distribution hours — no registration required for first visit.',
+    phone: '(408) 555-0166',
+    hours: 'Tue & Fri 10am–2pm',
+    address: '4001 N First St, San Jose, CA',
+    city: 'San Jose, CA',
+    zip_prefixes: ['951'],
+    national: false,
+    website: '#',
+    verified_days: 4,
+    confidence: 'high',
+    required_docs: ['No ID required'],
+    tags: ['food', 'emergency', 'walk-in'],
+  },
+  {
+    id: 20,
+    name: 'San Jose Emergency Shelter Network',
+    org: 'HomeFirst Services',
+    category: 'housing',
+    urgency: 'immediate',
+    response_time: 'Tonight',
+    summary: 'Emergency shelter placement for individuals and families in Santa Clara County.',
+    provides: 'Overnight shelter beds, meals, and case management with pathways to transitional housing.',
+    eligibility: 'Adults and families experiencing homelessness in Santa Clara County.',
+    how_to_apply: 'Call the shelter hotline for same-day placement screening.',
+    phone: '(408) 555-0210',
+    hours: 'Hotline: 7am–11pm · Shelter open 24/7',
+    address: '2011 Little Orchard St, San Jose, CA',
+    city: 'San Jose, CA',
+    zip_prefixes: ['951'],
+    national: false,
+    website: '#',
+    verified_days: 6,
+    confidence: 'high',
+    required_docs: ['No ID required'],
+    tags: ['housing', 'shelter', 'homeless', 'immediate'],
+  },
+  {
+    id: 21,
+    name: 'Santa Clara County Utility Assistance',
+    org: 'Sacred Heart Community Service',
+    category: 'utilities',
+    urgency: 'within-week',
+    response_time: '5–7 days',
+    summary: 'Emergency help paying PG&E or water bills for South Bay households.',
+    provides: 'One-time payment toward overdue utility bills, paid directly to the provider.',
+    eligibility: 'Santa Clara County households facing financial hardship with a shutoff notice or overdue balance.',
+    how_to_apply: 'Call to schedule an intake appointment. Bring your most recent bill and proof of income.',
+    phone: '(408) 555-0455',
+    hours: 'Mon–Fri 9am–4pm',
+    address: '1381 S First St, San Jose, CA',
+    city: 'San Jose, CA',
+    zip_prefixes: ['951'],
+    national: false,
+    website: '#',
+    verified_days: 11,
+    confidence: 'medium',
+    required_docs: ['Photo ID', 'Most recent utility bill', 'Proof of income'],
+    tags: ['utilities', 'shutoff-prevention'],
+  },
 ];
+
+// ═══════════════════════════════════ DEFAULT KEY ═════════════════════════════
+
+// Embedded default Google Maps API key — used automatically if the user
+// hasn't saved their own key in Settings. Anyone who opens this file's
+// source/devtools can see this value, so it should stay restricted (HTTP
+// referrer + a daily quota cap) in Google Cloud Console rather than relying
+// on this being secret.
+const DEFAULT_GMAPS_KEY = 'AIzaSyCMY6Wv9sjMmas7zibc11i0H1vpdv1JBIc';
+
+function getActiveGmapsKey() {
+  return localStorage.getItem('caid_gmaps_key') || DEFAULT_GMAPS_KEY || '';
+}
 
 // ═══════════════════════════════════ STATE ═══════════════════════════════════
 
@@ -1203,6 +1430,11 @@ let state = {
   matched: [],
   detectedNeeds: [],
   summaryText: '',
+  zipcode: '',
+  servedLocally: true,
+  matchedCityLabel: '',
+  usedLiveSearch: false,
+  liveSearchError: null,
 };
 
 // ═══════════════════════════════════ SETTINGS ════════════════════════════════
@@ -1210,17 +1442,16 @@ let state = {
 function toggleSettings() {
   document.getElementById('settings-panel').classList.toggle('open');
   const keyInput = document.getElementById('api-key-input');
-  const stored = localStorage.getItem('caid_api_key');
-  if (stored) keyInput.value = stored;
+  keyInput.value = getActiveGmapsKey();
 }
 
 function saveApiKey() {
   const key = document.getElementById('api-key-input').value.trim();
   if (key) {
-    localStorage.setItem('caid_api_key', key);
+    localStorage.setItem('caid_gmaps_key', key);
     setKeyStatus(true);
   } else {
-    localStorage.removeItem('caid_api_key');
+    localStorage.removeItem('caid_gmaps_key');
     setKeyStatus(false);
   }
   document.getElementById('settings-panel').classList.remove('open');
@@ -1229,19 +1460,19 @@ function saveApiKey() {
 function setKeyStatus(hasKey) {
   const el = document.getElementById('key-status');
   if (hasKey) {
-    el.textContent = '✅ Claude API key active — AI analysis enabled';
+    el.textContent = '✅ Google Maps key active — live results enabled';
     el.className = 'key-status active';
-    document.querySelector('.badge-ai').textContent = 'Claude AI';
+    document.querySelector('.badge-ai').textContent = 'Live via Google Maps';
   } else {
-    el.textContent = 'No API key set — using keyword matching';
+    el.textContent = 'No API key set — showing demo sample programs';
     el.className = 'key-status inactive';
-    document.querySelector('.badge-ai').textContent = 'AI-Powered';
+    document.querySelector('.badge-ai').textContent = 'Demo Mode';
   }
 }
 
 // Check on load
 window.addEventListener('load', () => {
-  if (localStorage.getItem('caid_api_key')) setKeyStatus(true);
+  if (getActiveGmapsKey()) setKeyStatus(true);
 });
 
 // Close settings on outside click
@@ -1276,6 +1507,7 @@ async function startSearch() {
     return;
   }
 
+  state.zipcode = document.getElementById('zipcode').value.trim();
   showScreen('analyzing');
   await runAnalysis(desc);
 }
@@ -1313,56 +1545,155 @@ async function runAnalysis(description) {
     el.querySelector('.step-icon').textContent = '✓';
   }
 
-  // Try AI, fall back to keywords
-  const apiKey = localStorage.getItem('caid_api_key');
-  let analysis;
-  if (apiKey) {
-    analysis = await analyzeWithClaude(description, apiKey);
-  } else {
-    analysis = analyzeWithKeywords(description);
-  }
-
+  // Needs/urgency are always detected via keyword matching (no AI call needed for this part).
+  const analysis = analyzeWithKeywords(description);
   state.detectedNeeds = analysis.needs;
   state.summaryText = analysis.summary;
 
-  // Match and filter programs
-  state.matched = matchPrograms(analysis.needs, state.urgency);
+  // If a Google Maps key is set, try to find real, currently-operating
+  // organizations near the user's ZIP. Otherwise (or on failure) fall back
+  // to the curated demo sample programs.
+  const gmapsKey = getActiveGmapsKey();
+  state.usedLiveSearch = false;
+  state.liveSearchError = null;
+
+  if (gmapsKey) {
+    try {
+      const live = await searchLivePrograms(state.detectedNeeds, state.zipcode, gmapsKey);
+      if (live.length > 0) {
+        state.matched = live;
+        state.usedLiveSearch = true;
+      } else {
+        throw new Error('No live results came back for this ZIP/need combination.');
+      }
+    } catch (err) {
+      console.error('Live Google Maps search failed, falling back to demo data:', err);
+      state.liveSearchError = (err && err.message) || 'Live search failed.';
+      state.matched = matchPrograms(state.detectedNeeds, state.urgency, state.zipcode);
+    }
+  } else {
+    state.matched = matchPrograms(state.detectedNeeds, state.urgency, state.zipcode);
+  }
 
   await sleep(300);
   showResults();
 }
 
-// ═══════════════════════════════════ AI ANALYSIS ═════════════════════════════
+// ═══════════════════════════════════ LIVE SEARCH (GOOGLE PLACES) ═════════════
 
-async function analyzeWithClaude(description, apiKey) {
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 400,
-        system: `You are a crisis intake specialist for an aid matching tool. Analyze the person's situation and return ONLY valid JSON (no other text) with this exact structure:
-{
-  "needs": ["food","housing","utilities","medical","cash","childcare"],
-  "urgency": "immediate|within-week|general",
-  "summary": "One clear sentence summarizing their core situation and primary needs."
+// Search phrases per need category — fed into Google Places Text Search.
+const PLACE_QUERIES = {
+  food:      'food bank emergency food pantry',
+  housing:   'homeless shelter emergency housing rental assistance organization',
+  utilities: 'utility bill payment assistance program nonprofit',
+  medical:   'free clinic community health center low cost',
+  cash:      'emergency financial assistance nonprofit organization',
+  childcare: 'emergency childcare assistance program',
+};
+
+let gmapsLoadPromise = null;
+
+// Official Google-recommended dynamic library bootstrap loader. This defines
+// `google.maps.importLibrary` synchronously (unlike a plain <script> tag with
+// loading=async, whose onload event can fire before importLibrary exists,
+// which caused "google.maps.importLibrary is not a function").
+function loadGoogleMaps(apiKey) {
+  if (gmapsLoadPromise) return gmapsLoadPromise;
+  gmapsLoadPromise = new Promise((resolve, reject) => {
+    try {
+      (g => {
+        var h, a, k, p = 'The Google Maps JavaScript API', c = 'google', l = 'importLibrary', q = '__ib__',
+          m = document, b = window;
+        b = b[c] || (b[c] = {});
+        var d = b.maps || (b.maps = {}), r = new Set(), e = new URLSearchParams(),
+          u = () => h || (h = new Promise(async (f, n) => {
+            await (a = m.createElement('script'));
+            e.set('libraries', [...r] + '');
+            for (k in g) e.set(k.replace(/[A-Z]/g, t => '_' + t[0].toLowerCase()), g[k]);
+            e.set('callback', c + '.maps.' + q);
+            a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+            d[q] = f;
+            a.onerror = () => h = n(Error(p + ' could not load.'));
+            a.nonce = m.querySelector('script[nonce]')?.nonce || '';
+            m.head.append(a);
+          }));
+        d[l] ? console.warn(p + ' only loads once. Ignoring:', g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n));
+      })({ key: apiKey, v: 'weekly' });
+      // Kick off an actual library load so the script tag gets injected now.
+      window.google.maps.importLibrary('places').then(() => resolve()).catch(reject);
+    } catch (err) {
+      reject(err);
+    }
+  });
+  return gmapsLoadPromise;
 }
-Only include needs that are clearly relevant. urgency should be "immediate" if they need help today.`,
-        messages: [{ role: 'user', content: description }],
-      }),
-    });
-    const data = await res.json();
-    const text = data.content?.[0]?.text || '';
-    const parsed = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
-    if (parsed.needs && parsed.summary) return parsed;
-  } catch (_) {}
-  return analyzeWithKeywords(description);
+
+// Converts one Google Places result into the same card shape the rest of the
+// UI already knows how to render (see PROGRAMS above for the reference shape).
+function placeToCard(place, category, idx) {
+  const name = place.displayName || 'Unnamed organization';
+  const status = place.businessStatus || 'UNKNOWN';
+  const confidence = status === 'OPERATIONAL' ? 'high' : status === 'CLOSED_TEMPORARILY' ? 'low' : 'unknown';
+
+  let isOpenNow = null;
+  try { isOpenNow = place.regularOpeningHours ? place.regularOpeningHours.isOpen() : null; } catch (_) {}
+
+  const hoursText = place.regularOpeningHours && place.regularOpeningHours.weekdayDescriptions
+    ? place.regularOpeningHours.weekdayDescriptions.join(' · ')
+    : 'Hours not listed — call to confirm';
+
+  return {
+    id: `gp-${category}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+    name,
+    org: name,
+    category,
+    urgency: 'within-week',
+    response_time: isOpenNow === true ? 'Open now' : isOpenNow === false ? 'Closed now — check hours' : 'Call to confirm',
+    summary: `Found via Google Maps for ${CATEGORIES[category] ? CATEGORIES[category].label.toLowerCase() : category} assistance near you.`,
+    provides: 'Contact this organization directly to confirm exactly what assistance they provide today — Google Maps doesn\'t list program details.',
+    eligibility: 'Eligibility varies by program — ask when you contact them.',
+    how_to_apply: 'Call or visit during open hours and ask for emergency/crisis assistance intake.',
+    phone: place.nationalPhoneNumber || 'Not listed — see Google Maps link',
+    hours: hoursText,
+    address: place.formattedAddress || 'Address not listed',
+    city: place.formattedAddress || '',
+    website: place.googleMapsURI || '#',
+    verified_days: 0,
+    confidence,
+    required_docs: ['Call ahead to ask what documents are required'],
+    tags: [],
+    live: true,
+    businessStatus: status,
+    rating: place.rating || null,
+    googleMapsUri: place.googleMapsURI || null,
+  };
+}
+
+async function searchPlacesForNeed(category, zipcode) {
+  const { Place } = await google.maps.importLibrary('places');
+  const queryBase = PLACE_QUERIES[category] || category;
+  const textQuery = zipcode ? `${queryBase} near ${zipcode}` : queryBase;
+  const { places } = await Place.searchByText({
+    textQuery,
+    fields: ['displayName', 'formattedAddress', 'nationalPhoneNumber', 'businessStatus', 'regularOpeningHours', 'rating', 'googleMapsURI', 'id'],
+    maxResultCount: 3,
+    language: 'en',
+    region: 'us',
+  });
+  return (places || []).map((p, i) => placeToCard(p, category, i));
+}
+
+async function searchLivePrograms(needs, zipcode, apiKey) {
+  await loadGoogleMaps(apiKey);
+  await google.maps.importLibrary('places');
+  const categoriesToSearch = needs.length ? needs : Object.keys(PLACE_QUERIES);
+  const results = await Promise.all(
+    categoriesToSearch.map(n => searchPlacesForNeed(n, zipcode).catch(err => {
+      console.error(`Places search failed for category "${n}":`, err);
+      return [];
+    }))
+  );
+  return results.flat().filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY');
 }
 
 function analyzeWithKeywords(description) {
@@ -1412,14 +1743,42 @@ function joinList(arr) {
 
 // ═══════════════════════════════════ MATCHING ════════════════════════════════
 
-function matchPrograms(needs, urgency) {
+// Known service-area ZIP prefixes across all programs — used to detect
+// whether the user's ZIP falls inside an area we have local listings for.
+function getKnownZipPrefixes() {
+  const set = new Set();
+  PROGRAMS.forEach(p => p.zip_prefixes.forEach(z => set.add(z)));
+  return set;
+}
+
+function matchPrograms(needs, urgency, zipcode) {
   const urgencyScore = { immediate: 3, 'same-day': 2, 'within-week': 1, general: 0 };
-  const selectedUrgencyScore = urgency === 'today' ? 3 : urgency === 'week' ? 1 : 0;
+  const zip = (zipcode || '').trim();
+  const zipPrefix = zip.length >= 3 ? zip.slice(0, 3) : null;
+  const knownPrefixes = getKnownZipPrefixes();
+
+  // Did the user give us a ZIP, and do we have local programs for it?
+  state.servedLocally = !zipPrefix || knownPrefixes.has(zipPrefix);
 
   return PROGRAMS
     .filter(p => needs.includes(p.category) || needs.length === 0)
+    .filter(p => {
+      // National/statewide programs always show.
+      if (p.national) return true;
+      // No ZIP entered — show everything (can't filter by location).
+      if (!zipPrefix) return true;
+      // ZIP entered and matches this program's service area.
+      if (p.zip_prefixes.includes(zipPrefix)) return true;
+      // ZIP entered but doesn't match — only show local programs if we have
+      // NO local coverage at all for that ZIP (so the list isn't empty).
+      return !state.servedLocally;
+    })
     .map(p => {
       let score = 0;
+      // Strongly prefer programs that actually serve the user's ZIP.
+      if (zipPrefix && p.zip_prefixes.includes(zipPrefix)) score += 6;
+      // National programs are a safe fallback but rank below a local match.
+      else if (p.national) score += 3;
       // Urgency match
       if (urgency === 'today') score += urgencyScore[p.urgency] * 3;
       // Confidence boost
@@ -1450,6 +1809,34 @@ function showResults() {
       'We\'ve prioritized programs with same-day or immediate response at the top. Call before visiting to confirm availability — demand can be high.';
   } else {
     banner.style.display = 'none';
+  }
+
+  // ZIP coverage banner only applies to the demo sample data path.
+  const zipBanner = document.getElementById('zip-banner');
+  if (!state.usedLiveSearch && state.zipcode && !state.servedLocally) {
+    zipBanner.style.display = 'flex';
+    document.getElementById('zip-banner-text').textContent =
+      `We don't have verified local listings for ZIP ${state.zipcode} yet. Showing statewide/nationwide programs available everywhere, plus the closest local listings we do have.`;
+  } else {
+    zipBanner.style.display = 'none';
+  }
+
+  // Live-search success / fallback banners
+  const liveBanner = document.getElementById('live-banner');
+  const errorBanner = document.getElementById('error-banner');
+  if (state.usedLiveSearch) {
+    liveBanner.style.display = 'flex';
+    document.getElementById('live-banner-text').textContent =
+      `These organizations were found just now via Google Maps${state.zipcode ? ' near ZIP ' + state.zipcode : ''}. Open/closed status comes from Google — always call before visiting.`;
+    errorBanner.style.display = 'none';
+  } else if (state.liveSearchError) {
+    errorBanner.style.display = 'flex';
+    document.getElementById('error-banner-text').textContent =
+      `Live Google Maps search didn't return results (${state.liveSearchError}). Showing demo sample programs instead — check that your API key is valid and Places API (New) is enabled.`;
+    liveBanner.style.display = 'none';
+  } else {
+    liveBanner.style.display = 'none';
+    errorBanner.style.display = 'none';
   }
 
   // Filter tabs
@@ -1508,6 +1895,14 @@ function renderResults() {
 }
 
 function verificationBadge(p) {
+  if (p.live) {
+    if (p.businessStatus === 'OPERATIONAL') {
+      return `<span class="badge badge-verified-high">✓ Open per Google Maps</span>`;
+    } else if (p.businessStatus === 'CLOSED_TEMPORARILY') {
+      return `<span class="badge badge-verified-low">⚠ Marked temporarily closed on Google</span>`;
+    }
+    return `<span class="badge badge-verified-unknown">🔎 Live result — status unconfirmed</span>`;
+  }
   const days = p.verified_days;
   const conf = p.confidence;
   let cls, text;
@@ -1536,7 +1931,7 @@ function renderProgramCard(p) {
   const cat = CATEGORIES[p.category];
   const isUrgent = p.urgency === 'immediate' || p.urgency === 'same-day';
   return `
-    <div class="program-card${isUrgent ? ' urgent-card' : ''}" onclick="openModal(${p.id})">
+    <div class="program-card${isUrgent ? ' urgent-card' : ''}" onclick="openModal('${p.id}')">
       <div class="card-header">
         <div class="card-header-left">
           <div class="cat-icon" style="background:${cat.bg}">${cat.icon}</div>
@@ -1552,8 +1947,10 @@ function renderProgramCard(p) {
       </div>
       <div class="card-summary">${p.summary}</div>
       <div class="card-meta">
+        <span class="card-meta-item">📍 ${p.city}</span>
         <span class="card-meta-item">📞 ${p.phone}</span>
         <span class="card-meta-item">🕐 ${p.hours.split('·')[0].trim()}</span>
+        ${p.live && p.rating ? `<span class="card-meta-item">⭐ ${p.rating}</span>` : ''}
       </div>
       <div class="card-footer">
         <button class="btn-details">View details & how to apply →</button>
@@ -1566,7 +1963,7 @@ function renderProgramCard(p) {
 // ═══════════════════════════════════ MODAL ═══════════════════════════════════
 
 function openModal(id) {
-  const p = PROGRAMS.find(x => x.id === id);
+  const p = state.matched.find(x => String(x.id) === String(id)) || PROGRAMS.find(x => String(x.id) === String(id));
   if (!p) return;
   const cat = CATEGORIES[p.category];
 
@@ -1624,14 +2021,19 @@ function openModal(id) {
             <div class="value">${p.address}</div>
           </div>
           <div class="contact-item">
+            <div class="label">${p.live ? 'Google Maps' : 'Service area'}</div>
+            <div class="value">${p.live ? (p.googleMapsUri ? `<a href="${p.googleMapsUri}" target="_blank" rel="noopener">View on Maps →</a>` : 'Not available') : p.city}</div>
+          </div>
+          <div class="contact-item">
             <div class="label">Last verified</div>
-            <div class="value">${p.verified_days === 1 ? 'Yesterday' : p.verified_days + ' days ago'}</div>
+            <div class="value">${p.live ? '🔎 Just now (live search)' : (p.verified_days === 1 ? 'Yesterday' : p.verified_days + ' days ago')}</div>
           </div>
         </div>
       </div>
+      ${p.live ? `<div class="modal-section"><h4>A note on this result</h4><p>This organization was found live via Google Maps, not hand-verified by CrisisAid. Google Maps doesn't list eligibility rules or required documents — call ahead and ask before visiting.${p.rating ? ` Rated ${p.rating}★ on Google.` : ''}</p></div>` : ''}
 
       <div class="modal-cta">
-        <a class="btn-call" href="tel:${p.phone.replace(/[^+\d]/g,'')}">📞 Call ${p.phone}</a>
+        ${/\d{3}/.test(p.phone) ? `<a class="btn-call" href="tel:${p.phone.replace(/[^+\d]/g,'')}">📞 Call ${p.phone}</a>` : (p.live && p.googleMapsUri ? `<a class="btn-call" href="${p.googleMapsUri}" target="_blank" rel="noopener">📍 View on Google Maps</a>` : '')}
         <p class="modal-disclaimer">Always call ahead to confirm availability before visiting in person. Program status and hours can change without notice. CrisisAid is not affiliated with this organization.</p>
       </div>
     </div>
