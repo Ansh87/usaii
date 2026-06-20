@@ -732,13 +732,19 @@ textarea#situation::placeholder { color: var(--gray-400); }
 <!-- Settings Panel -->
 <div class="settings-panel" id="settings-panel">
   <h3><i data-lucide="settings" style="width:18px;height:18px; color:var(--primary)"></i> Settings</h3>
-  <label>Google Maps API Key (optional)</label>
-  <input type="password" id="api-key-input" placeholder="AIza..." />
-  <small>A demo Google Maps key is already built in (Places API + Maps JavaScript API), so live results work out of the box. Swap in your own key here if you want to use a different one — get one at <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener">console.cloud.google.com</a>. Tip: if you're opening this file locally (file://), don't add an HTTP referrer restriction to the key — local files send a "null" referrer and Google will block the request.</small>
-  <button class="btn-save-key" onclick="saveApiKey()">Save Key</button>
-  <div class="key-status inactive" id="key-status">
-    <i data-lucide="info" style="width:16px;height:16px"></i>
-    <span>Demo Mode — showing verified sample programs</span>
+  <div style="margin-bottom: 16px;">
+    <label for="gemini-key-input">Gemini API Key</label>
+    <input type="password" id="gemini-key-input" placeholder="AIzaSy..." />
+    <small style="margin-top: 4px; display: block;">Used for accurate natural language classification and empathetic summaries. <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Get a free key here</a>.</small>
+  </div>
+  <div style="margin-bottom: 16px;">
+    <label for="api-key-input">Google Maps API Key (optional)</label>
+    <input type="password" id="api-key-input" placeholder="AIza..." />
+    <small style="margin-top: 4px; display: block;">A demo Google Maps key is already built in (Places API + Maps JavaScript API), so live results work out of the box.</small>
+  </div>
+  <button class="btn-save-key" onclick="saveSettings()">Save Settings</button>
+  <div class="key-status" id="key-status" style="margin-top: 20px;">
+    <!-- Status loaded by JavaScript -->
   </div>
 </div>
 
@@ -904,7 +910,7 @@ textarea#situation::placeholder { color: var(--gray-400); }
           <div class="arch-step-icon"><i data-lucide="cpu"></i></div>
           <div>
             <h5>2. LLM Classification</h5>
-            <p>Anthropic Claude processes the text, outputting ONLY structured JSON identifying core needs and urgency.</p>
+            <p>Google Gemini processes the text, outputting ONLY structured JSON identifying core needs and urgency.</p>
           </div>
         </div>
         <div class="arch-arrow"><i data-lucide="arrow-down" style="width:20px;height:20px"></i></div>
@@ -932,9 +938,6 @@ textarea#situation::placeholder { color: var(--gray-400); }
 <div class="fab-container">
   <button class="fab-btn urgent" title="Emergency 911" onclick="window.location.href='tel:911'">
     <i data-lucide="phone-call" style="width:24px;height:24px"></i>
-  </button>
-  <button class="fab-btn" title="Quick Exit" onclick="window.location.href='https://weather.com'">
-    <i data-lucide="log-out" style="width:24px;height:24px"></i>
   </button>
 </div>
 
@@ -1019,42 +1022,68 @@ const PROGRAMS = [
 
 let state = { urgency: 'general', filter: 'all', matched: [], summaryText: '', zipcode: '', usedLiveSearch: false, liveSearchError: null };
 
-// ═══════════════════════════════════ DEFAULT KEY ═════════════════════════════
+// ═══════════════════════════════════ KEYS & SETTINGS ═════════════════════════
 const DEFAULT_GMAPS_KEY = 'AIzaSyCMY6Wv9sjMmas7zibc11i0H1vpdv1JBIc';
+
 function getActiveGmapsKey() {
   return localStorage.getItem('caid_gmaps_key') || DEFAULT_GMAPS_KEY || '';
 }
 
-// ═══════════════════════════════════ SETTINGS ════════════════════════════════
+function getActiveGeminiKey() {
+  return localStorage.getItem('caid_gemini_key') || '';
+}
 
 function toggleSettings() {
   document.getElementById('settings-panel').classList.toggle('open');
-  document.getElementById('api-key-input').value = getActiveGmapsKey();
+  document.getElementById('api-key-input').value = localStorage.getItem('caid_gmaps_key') || '';
+  document.getElementById('gemini-key-input').value = getActiveGeminiKey();
 }
 
-function saveApiKey() {
-  const key = document.getElementById('api-key-input').value.trim();
-  if (key) {
-    localStorage.setItem('caid_gmaps_key', key);
-    setKeyStatus(true);
+function saveSettings() {
+  const gmapsKey = document.getElementById('api-key-input').value.trim();
+  const geminiKey = document.getElementById('gemini-key-input').value.trim();
+  
+  if (gmapsKey) {
+    localStorage.setItem('caid_gmaps_key', gmapsKey);
   } else {
     localStorage.removeItem('caid_gmaps_key');
-    setKeyStatus(!!DEFAULT_GMAPS_KEY);
   }
+  
+  if (geminiKey) {
+    localStorage.setItem('caid_gemini_key', geminiKey);
+  } else {
+    localStorage.removeItem('caid_gemini_key');
+  }
+  
+  updateKeyStatusDisplay();
   document.getElementById('settings-panel').classList.remove('open');
 }
 
-function setKeyStatus(hasKey) {
+function updateKeyStatusDisplay() {
   const el = document.getElementById('key-status');
-  if (hasKey) {
-    el.innerHTML = '<i data-lucide="check-circle" style="width:16px;height:16px;color:#16a34a"></i> <span style="color:#16a34a">Live via Google Maps</span>';
+  const hasGemini = !!getActiveGeminiKey();
+  const hasMaps = !!getActiveGmapsKey();
+  
+  let html = '<div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 500;">';
+  
+  if (hasGemini) {
+    html += `<div style="display:flex; align-items:center; gap:6px; color:#16a34a;"><i data-lucide="sparkles" style="width:16px;height:16px;color:#16a34a"></i> <span>Gemini: Active (AI Mode)</span></div>`;
   } else {
-    el.innerHTML = '<i data-lucide="info" style="width:16px;height:16px"></i> <span>Demo Mode — showing verified sample programs</span>';
+    html += `<div style="display:flex; align-items:center; gap:6px; color:var(--gray-500);"><i data-lucide="info" style="width:16px;height:16px;color:var(--gray-500)"></i> <span>Gemini: Keyword Matching Mode</span></div>`;
   }
+  
+  if (hasMaps) {
+    html += `<div style="display:flex; align-items:center; gap:6px; color:#16a34a;"><i data-lucide="check-circle" style="width:16px;height:16px;color:#16a34a"></i> <span>Maps: Live Search Active</span></div>`;
+  } else {
+    html += `<div style="display:flex; align-items:center; gap:6px; color:var(--gray-500);"><i data-lucide="info" style="width:16px;height:16px;color:var(--gray-500)"></i> <span>Maps: Verified Sample Programs</span></div>`;
+  }
+  
+  html += '</div>';
+  el.innerHTML = html;
   lucide.createIcons();
 }
 
-window.addEventListener('load', () => { if (getActiveGmapsKey()) setKeyStatus(true); });
+window.addEventListener('load', () => { updateKeyStatusDisplay(); });
 document.addEventListener('click', (e) => {
   const panel = document.getElementById('settings-panel');
   if (panel.classList.contains('open') && !panel.contains(e.target) && !e.target.closest('#btn-settings')) {
@@ -1097,7 +1126,16 @@ const ANALYSIS_STEPS = [
 
 function renderAnalysisSteps() {
   const container = document.getElementById('analysis-steps');
-  container.innerHTML = ANALYSIS_STEPS.map((s, i) => `
+  const hasGemini = !!getActiveGeminiKey();
+  
+  const steps = [
+    { text: hasGemini ? 'Consulting Gemini for natural language analysis' : 'Parsing natural language input', icon: 'message-square' },
+    { text: hasGemini ? 'Extracting structured needs and urgency' : 'Extracting intent via local keyword matching', icon: 'search' },
+    { text: 'Querying deterministic verification database', icon: 'database' },
+    { text: 'Ranking matches by response latency', icon: 'list-ordered' },
+  ];
+  
+  container.innerHTML = steps.map((s, i) => `
     <div class="analysis-step" id="step-${i}">
       <div class="step-icon"><i data-lucide="${s.icon}" style="width:14px;height:14px"></i></div>
       <span>${s.text}</span>
@@ -1108,24 +1146,53 @@ function renderAnalysisSteps() {
 
 async function runAnalysis(description) {
   renderAnalysisSteps();
-  for (let i = 0; i < ANALYSIS_STEPS.length; i++) {
-    const el = document.getElementById(`step-${i}`);
-    el.classList.add('active');
-    await sleep(400 + Math.random() * 300);
-    el.classList.remove('active');
-    el.classList.add('done');
-    const iconEl = el.querySelector('.step-icon');
-    iconEl.innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
-    lucide.createIcons();
+  
+  const geminiKey = getActiveGeminiKey();
+  let analysis = null;
+  
+  // ── Step 0: Parsing / Consulting Gemini ──
+  const step0 = document.getElementById('step-0');
+  step0.classList.add('active');
+  
+  if (geminiKey) {
+    try {
+      analysis = await analyzeWithGemini(description, geminiKey);
+    } catch (err) {
+      console.error('Gemini API analysis failed, falling back to local keywords:', err);
+      analysis = analyzeWithKeywords(description);
+    }
+  } else {
+    await sleep(800); // Give user time to see the step
+    analysis = analyzeWithKeywords(description);
   }
-
-  const analysis = analyzeWithKeywords(description);
+  
+  step0.classList.remove('active');
+  step0.classList.add('done');
+  step0.querySelector('.step-icon').innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
+  lucide.createIcons();
+  
+  // ── Step 1: Extracting intent and required parameters ──
+  const step1 = document.getElementById('step-1');
+  step1.classList.add('active');
+  await sleep(600);
+  step1.classList.remove('active');
+  step1.classList.add('done');
+  step1.querySelector('.step-icon').innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
+  lucide.createIcons();
+  
+  // ── Step 2: Querying database (deterministic matching) ──
+  const step2 = document.getElementById('step-2');
+  step2.classList.add('active');
+  
   state.summaryText = analysis.summary;
-
+  if (analysis.urgency) {
+    state.urgency = analysis.urgency;
+  }
+  
   const gmapsKey = getActiveGmapsKey();
   state.usedLiveSearch = false;
   state.liveSearchError = null;
-
+  
   if (gmapsKey) {
     try {
       const live = await searchLivePrograms(analysis.needs, state.zipcode, gmapsKey);
@@ -1145,9 +1212,105 @@ async function runAnalysis(description) {
   } else {
     state.matched = matchPrograms(analysis.needs, state.urgency);
   }
-
-  await sleep(500);
+  
+  step2.classList.remove('active');
+  step2.classList.add('done');
+  step2.querySelector('.step-icon').innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
+  lucide.createIcons();
+  
+  // ── Step 3: Ranking matches ──
+  const step3 = document.getElementById('step-3');
+  step3.classList.add('active');
+  await sleep(400);
+  step3.classList.remove('active');
+  step3.classList.add('done');
+  step3.querySelector('.step-icon').innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
+  lucide.createIcons();
+  
+  await sleep(400);
   showResults();
+}
+
+async function analyzeWithGemini(description, apiKey) {
+  const model = 'gemini-2.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  
+  const systemPrompt = `You are the AI routing core of CrisisAid, a professional and comforting crisis aid portal.
+Your task is to analyze the user's plain-language description of their crisis and return a structured JSON response.
+
+Strictly categorize their needs into one or more of these standard categories:
+- 'food': food bank, hunger, pantry, groceries, meals
+- 'housing': rent, eviction, homelessness, shelters, housing assistance
+- 'utilities': electricity, gas, water, shutoff notices
+- 'medical': clinic, doctor, medicine, health issues
+- 'cash': general emergency cash aid, financial hardship
+- 'childcare': emergency childcare assistance
+
+Determine the urgency level:
+- 'immediate': crisis requiring attention today (e.g., homeless tonight, shutoff notice today, no food at all)
+- 'within-week': needs attention within a few days (e.g., rent due next week, low food supply)
+- 'general': general planning, ongoing support, or long-term assistance
+
+Provide a comforting, professional, and clear 'summary' in 2-3 sentences. Reassure the user, summarize the needs you identified, and explain that you are matching them to active programs.
+If 'immediate' urgency is detected, provide a brief 'urgentReason' (1 sentence), otherwise keep it empty.`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: `Here is the user's situation:\n"${description}"\n\nAnalyze it and return the JSON.`
+        }]
+      }],
+      systemInstruction: {
+        parts: [{
+          text: systemPrompt
+        }]
+      },
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            needs: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["food", "housing", "utilities", "medical", "cash", "childcare"]
+              }
+            },
+            urgency: {
+              type: "string",
+              enum: ["immediate", "within-week", "general"]
+            },
+            summary: {
+              type: "string"
+            },
+            urgentReason: {
+              type: "string"
+            }
+          },
+          required: ["needs", "urgency", "summary", "urgentReason"]
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini API Error: ${response.status} - ${errText}`);
+  }
+
+  const data = await response.json();
+  const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!jsonText) {
+    throw new Error("Empty response from Gemini API");
+  }
+
+  return JSON.parse(jsonText.trim());
 }
 
 // ═══════════════════════════════════ LIVE GOOGLE MAPS SEARCH ═════════════════
