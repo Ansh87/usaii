@@ -738,9 +738,9 @@ textarea#situation::placeholder { color: var(--gray-400); }
 <div class="settings-panel" id="settings-panel">
   <h3><i data-lucide="settings" style="width:18px;height:18px; color:var(--primary)"></i> Settings</h3>
   <div style="margin-bottom: 16px;">
-    <label for="gemini-key-input">Gemini API Key</label>
-    <input type="password" id="gemini-key-input" placeholder="AIzaSy..." />
-    <small style="margin-top: 4px; display: block;">Used for accurate natural language classification and empathetic summaries. <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Get a free key here</a>.</small>
+    <label for="gemini-key-input">Gemini API Key (optional)</label>
+    <input type="password" id="gemini-key-input" placeholder="AQ.Ab..." />
+    <small style="margin-top: 4px; display: block;">A demo Gemini key is already built in, so AI mode works out of the box. Swap in your own key here if you want to use a different one — get one at <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a>.</small>
   </div>
   <div style="margin-bottom: 16px;">
     <label for="api-key-input">Google Maps API Key (optional)</label>
@@ -1035,8 +1035,10 @@ function getActiveGmapsKey() {
   return localStorage.getItem('caid_gmaps_key') || DEFAULT_GMAPS_KEY || '';
 }
 
+const DEFAULT_GEMINI_KEY = 'AQ.Ab8RN6KGz8igGDzc44ECxBDdXBxbXfobjuP-jNR1RWdl9X_6QQ';
+
 function getActiveGeminiKey() {
-  return localStorage.getItem('caid_gemini_key') || '';
+  return localStorage.getItem('caid_gemini_key') || DEFAULT_GEMINI_KEY || '';
 }
 
 function toggleSettings() {
@@ -1563,7 +1565,105 @@ async function searchLivePrograms(needs, zipcode, apiKey) {
       return [];
     }))
   );
-  return results.flat().filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY');
+  const places = results.flat().filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY');
+  
+  // Enrich Places with Gemini details if key is active
+  const geminiKey = getActiveGeminiKey();
+  if (geminiKey && places.length > 0) {
+    try {
+      await enrichPlacesWithGemini(places, geminiKey);
+    } catch (err) {
+      console.error("Failed to enrich places with Gemini:", err);
+    }
+  }
+  
+  return places;
+}
+
+async function enrichPlacesWithGemini(places, apiKey) {
+  const model = 'gemini-2.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  
+  const placesData = places.map(p => ({
+    id: p.id,
+    name: p.name,
+    address: p.address,
+    category: p.category
+  }));
+  
+  const systemPrompt = `You are a helpful crisis service assistant.
+Your task is to take a list of emergency resources found near a user and generate relevant, specific details for each organization based on your knowledge base.
+
+For each resource in the list, provide:
+- "provides": a short description (1-2 sentences) of exactly what assistance/services they provide (food pantries, shelters, financial aid, medical care, etc.). Be specific to their organization name.
+- "eligibility": typical eligibility criteria (e.g., income limits, residency, status limits) for this type of service at this location.
+- "how_to_apply": action items for the user to get help (e.g. walk-in instructions, appointment booking, phone inquiries).
+- "required_docs": an array of strings representing typical documents they might need to bring (e.g. Photo ID, Proof of Income, Utility Bill).
+
+Return a JSON object containing an "enrichments" array matching the order and count of the input.`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: `Here are the found resources:\n${JSON.stringify(placesData, null, 2)}\n\nGenerate the specific details for each resource.`
+        }]
+      }],
+      systemInstruction: {
+        parts: [{
+          text: systemPrompt
+        }]
+      },
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            enrichments: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  provides: { type: "string" },
+                  eligibility: { type: "string" },
+                  how_to_apply: { type: "string" },
+                  required_docs: { type: "array", items: { type: "string" } }
+                },
+                required: ["id", "provides", "eligibility", "how_to_apply", "required_docs"]
+              }
+            }
+          },
+          required: ["enrichments"]
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Enrichment Gemini API Error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!jsonText) return;
+
+  const result = JSON.parse(jsonText.trim());
+  if (result.enrichments) {
+    result.enrichments.forEach(item => {
+      const p = places.find(x => x.id === item.id);
+      if (p) {
+        p.provides = item.provides;
+        p.eligibility = item.eligibility;
+        p.how_to_apply = item.how_to_apply;
+        p.required_docs = item.required_docs;
+      }
+    });
+  }
 }
 
 function analyzeWithKeywords(d, urgency, household) {
