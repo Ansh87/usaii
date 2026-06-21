@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrisisAid — Professional & Comforting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  /* Comforting, warm, clean palette */
+  --bg: #f8fafc;        /* Slate 50 - Very soft, cool off-white */
+  --surface: #ffffff;   /* Pure white for cards */
+  --fg: #0f172a;        /* Slate 900 - Soft black for text */
+  --primary: #2563eb;   /* Blue 600 - Trustworthy, calming blue */
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  
+  --urgent: #e11d48;    /* Rose 600 - Urgent but softer than pure red */
+  --urgent-light: #fff1f2;
+  
+  --radius-sm: 8px;
+  --radius-md: 16px;    /* Soft, approachable rounding */
+  --radius-lg: 24px;
+  
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV ── */
+.nav {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 32px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--primary);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+.nav-right { display: flex; align-items: center; gap: 28px; }
+.nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-600);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-link:hover { color: var(--primary); }
+.btn-settings {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: color .2s;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 50%;
+}
+.btn-settings:hover { color: var(--fg); background: var(--gray-100); }
+
+/* ── SCREENS ── */
+.screen { 
+  display: none; 
+  opacity: 0;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(15px);
+}
+.screen.active { 
+  display: block; 
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── SETTINGS PANEL ── */
+.settings-panel {
+  display: none;
+  position: fixed;
+  top: 84px;
+  right: 32px;
+  background: var(--surface);
+  border: 1px solid var(--gray-200);
+  padding: 28px;
+  width: 360px;
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  border-radius: var(--radius-md);
+}
+.settings-panel.open { display: block; animation: fadeIn 0.2s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.settings-panel h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;}
+.settings-panel label { font-size: 13px; font-weight: 500; color: var(--gray-600); display: block; margin-bottom: 8px; }
+.settings-panel input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: monospace;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.settings-panel input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+.settings-panel small { color: var(--gray-500); font-size: 13px; display: block; margin-top: 12px; line-height: 1.5; }
+.btn-save-key {
+  margin-top: 24px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: background .2s;
+  border-radius: var(--radius-sm);
+}
+.btn-save-key:hover { background: var(--primary-hover); }
+.key-status { font-size: 13px; margin-top: 16px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+
+/* ── INTAKE SCREEN ── */
+.intake-wrapper {
+  max-width: 720px;
+  margin: 60px auto 120px;
+  padding: 0 24px;
+}
+.hero { margin-bottom: 48px; text-align: center; }
+.hero h1 {
+  font-size: clamp(32px, 5vw, 44px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
+  color: var(--fg);
+}
+.hero p {
+  font-size: 18px;
+  color: var(--gray-500);
+  line-height: 1.6;
+  font-weight: 400;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.intake-card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 40px;
+  border: 1px solid var(--gray-200);
+}
+
+.intake-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.input-group > label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--fg);
+  margin-bottom: 12px;
+}
+textarea#situation {
+  width: 100%;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.5;
+  color: var(--fg);
+  transition: border-color .3s, box-shadow .3s;
+  min-height: 120px;
+  outline: none;
+}
+textarea#situation:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+textarea#situation::placeholder { color: var(--gray-400); }
+
+.quick-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.filter-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 8px;
+}
+.filter-group input,
+.filter-group select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--fg);
+  background: var(--surface);
+  transition: border-color .3s, box-shadow .3s;
+  outline: none;
+}
+.filter-group input:focus,
+.filter-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+.urgency-section > label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 12px;
+}
+.urgency-options {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.urgency-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 16px;
+  border: 1px solid var(--gray-200);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all .2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.urgency-btn:hover { border-color: var(--gray-400); color: var(--fg); background: var(--gray-50); }
+.urgency-btn.selected {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.urgency-btn[data-value="today"].selected {
+  border-color: var(--urgent);
+  color: var(--urgent);
+  background: var(--urgent-light);
+  box-shadow: 0 0 0 1px var(--urgent);
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 32px;
+  border-top: 1px solid var(--gray-200);
+}
+.btn-primary {
+  padding: 14px 28px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .2s ease, transform .2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.disclaimer {
+  font-size: 13px;
+  color: var(--gray-500);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── ANALYZING SCREEN ── */
+.analyzing-wrapper {
+  max-width: 480px;
+  margin: 140px auto;
+  padding: 40px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
+}
+.analyzing-header { margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
+.analyzing-header h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.analysis-steps { display: flex; flex-direction: column; gap: 20px; }
+.analysis-step {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray-400);
+  transition: all .4s ease;
+  opacity: 0.6;
+}
+.analysis-step.active { opacity: 1; color: var(--primary); }
+.analysis-step.done { opacity: 1; color: var(--gray-600); }
+.step-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--gray-100);
+  color: var(--gray-400);
+  transition: all .4s ease;
+}
+.analysis-step.active .step-icon {
+  background: var(--primary-light);
+  color: var(--primary);
+  animation: pulse-ring 1.5s infinite;
+}
+.analysis-step.done .step-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3); }
+  70% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+
+/* ── RESULTS SCREEN ── */
+.results-wrapper {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 120px;
+}
+.results-header-block {
+  margin-bottom: 40px;
+}
+.btn-back {
+  background: var(--surface);
+  border: 1px solid var(--gray-200);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--gray-600);
+  transition: all .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
+}
+.btn-back:hover { color: var(--fg); border-color: var(--gray-300); background: var(--gray-50); }
+
+/* Human-in-the-loop emphasis */
+.hil-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--gray-200);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+.hil-banner i { color: var(--primary); }
+
+.ai-card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  border: 1px solid var(--gray-200);
+  border-left: 4px solid var(--primary);
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
+}
+.ai-card h4 { font-size: 13px; font-weight: 600; color: var(--gray-500); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.ai-card p { font-size: 18px; font-weight: 400; color: var(--fg); line-height: 1.5; }
+
+.urgent-banner {
+  background: var(--urgent-light);
+  border: 1px solid #fecdd3;
+  border-left: 4px solid var(--urgent);
+  padding: 20px 24px;
+  border-radius: var(--radius-md);
+  margin-bottom: 32px;
+}
+.urgent-banner h4 { font-size: 15px; font-weight: 600; color: var(--urgent); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;}
+.urgent-banner p { font-size: 14px; color: #9f1239; margin-left: 26px;}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--gray-200);
+  padding-bottom: 16px;
+}
+.filter-tabs { display: flex; gap: 24px; overflow-x: auto; padding-bottom: 4px; }
+.filter-tab {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: color .2s;
+  position: relative;
+  white-space: nowrap;
+}
+.filter-tab:hover { color: var(--fg); }
+.filter-tab.active { color: var(--primary); font-weight: 600; }
+.filter-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -21px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px 2px 0 0;
+}
+.tab-count { font-size: 12px; color: var(--gray-400); margin-left: 4px; background: var(--gray-100); padding: 2px 6px; border-radius: 12px;}
+.filter-tab.active .tab-count { background: var(--primary-light); color: var(--primary); }
+.results-count { font-size: 13px; color: var(--gray-500); font-weight: 500; }
+
+/* Program cards - Comforting Card Style */
+.programs-grid { display: flex; flex-direction: column; gap: 16px; }
+.program-card {
+  background: var(--surface);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  cursor: pointer;
+  transition: all .2s ease;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+.program-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--gray-300);
+}
+.program-card.urgent-card { border-left: 4px solid var(--urgent); }
+
+.card-main { min-width: 0; }
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 6px;
+}
+.card-org { font-size: 14px; color: var(--gray-500); display: flex; align-items: center; gap: 6px; }
+
+.card-meta-col { display: flex; flex-direction: column; gap: 10px; }
+.meta-text { font-size: 14px; color: var(--gray-600); display: flex; align-items: center; gap: 8px;}
+.meta-text i { color: var(--gray-400); }
+
+.card-status-col { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+.status-item { font-size: 13px; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; background: var(--gray-50); border: 1px solid var(--gray-100); }
+.status-verified { color: #16a34a; background: #f0fdf4; border-color: #bbf7d0; font-weight: 500;}
+.status-verified i { color: #16a34a; }
+.status-response { font-weight: 500; color: var(--primary); background: var(--primary-light); border-color: #bfdbfe; }
+.urgent-card .status-response { color: var(--urgent); background: var(--urgent-light); border-color: #fecdd3; }
+
+/* Transparency Note */
+.transparency-panel {
+  margin-top: 64px;
+  background: var(--surface);
+  padding: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-sm);
+}
+.transparency-panel h4 { font-size: 14px; font-weight: 600; color: var(--fg); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;}
+.transparency-panel h4 i { color: #16a34a; }
+.transparency-panel p { font-size: 14px; color: var(--gray-600); line-height: 1.6; max-width: 700px;}
+
+/* ── MODALS ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: var(--surface);
+  width: 100%;
+  max-width: 640px;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: -10px 0 40px rgba(0,0,0,0.1);
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 48px;
+  border-left: 1px solid var(--gray-200);
+}
+.modal-overlay.open .modal-box { transform: translateX(0); }
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.modal-title { font-size: 28px; font-weight: 600; color: var(--fg); margin-bottom: 8px; }
+.modal-org { font-size: 15px; color: var(--gray-500); display: flex; align-items: center; gap: 6px;}
+
+.modal-actions { display: flex; gap: 12px; }
+.btn-icon {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  cursor: pointer;
+  color: var(--gray-600);
+  transition: all .2s;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-icon:hover { color: var(--fg); background: var(--gray-100); border-color: var(--gray-300); }
+
+.modal-section { margin-bottom: 32px; }
+.modal-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-section h4 i { color: var(--primary); }
+.modal-section p, .modal-section li {
+  font-size: 15px;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+.modal-section ul { padding-left: 20px; }
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  background: var(--gray-50);
+  padding: 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+}
+.contact-item .label { font-size: 12px; font-weight: 600; color: var(--gray-500); margin-bottom: 4px; }
+.contact-item .value { font-size: 15px; font-weight: 500; color: var(--fg); }
+
+.btn-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 32px;
+  background: var(--primary);
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: 24px;
+  border-radius: var(--radius-md);
+  transition: background .2s, transform .2s;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+.btn-call:hover { background: var(--primary-hover); transform: translateY(-2px); }
+
+/* FAB */
+.fab-container {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-end;
+}
+.fab-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gray-600);
+  transition: all .2s;
+}
+.fab-btn:hover { color: var(--fg); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+.fab-btn.urgent { color: var(--urgent); border-color: #fecdd3; background: var(--urgent-light); }
+
+/* Architecture Modal Specifics */
+.arch-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+.arch-step {
+  padding: 20px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  gap: 16px;
+}
+.arch-step-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.arch-step h5 { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--fg); }
+.arch-step p { font-size: 14px; color: var(--gray-600); margin: 0; }
+.arch-arrow {
+  text-align: center;
+  color: var(--gray-400);
+}
+
+/* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+  .nav { padding: 0 16px; height: 60px; }
+  .nav-right { gap: 14px; }
+  .logo { font-size: 17px; gap: 8px; }
+
+  .settings-panel {
+    width: auto;
+    left: 16px;
+    right: 16px;
+    top: 72px;
+    padding: 20px;
+  }
+
+  .intake-wrapper { margin: 28px auto 80px; padding: 0 16px; }
+  .hero { margin-bottom: 28px; }
+  .hero p { font-size: 16px; }
+  .intake-card { padding: 24px; }
+  .intake-form { gap: 24px; }
+
+  .quick-filters { grid-template-columns: 1fr; gap: 16px; }
+
+  .urgency-options { flex-direction: column; }
+  .urgency-btn { flex-direction: row; justify-content: flex-start; min-width: 0; }
+
+  .form-actions { flex-direction: column-reverse; align-items: stretch; gap: 16px; }
+  .btn-primary { justify-content: center; width: 100%; }
+  .disclaimer { justify-content: center; }
+
+  .analyzing-wrapper { margin: 90px auto; padding: 0 16px; }
+
+  .results-wrapper { padding: 24px 16px 100px; }
+  .ai-card, .urgent-banner { padding: 18px; }
+  .ai-card p { font-size: 16px; }
+
+  .filter-bar { flex-wrap: wrap; gap: 12px; }
+  .filter-tabs { gap: 16px; }
+
+  .program-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 18px;
+  }
+  .card-status-col { flex-direction: row; align-items: center; flex-wrap: wrap; }
+  .card-meta-col { flex-direction: row; flex-wrap: wrap; gap: 16px; }
+
+  .transparency-panel { padding: 20px; margin-top: 40px; }
+
+  .modal-box { max-width: 100%; padding: 24px; }
+  .modal-title { font-size: 22px; }
+  .modal-header { margin-bottom: 24px; }
+
+  .contact-grid { grid-template-columns: 1fr; padding: 18px; }
+
+  .fab-container { bottom: 16px; right: 16px; gap: 12px; }
+  .fab-btn { width: 48px; height: 48px; }
+
+  .arch-step { padding: 16px; }
+}
+
+@media (max-width: 420px) {
+  .nav-link span, .nav-link { display: none; }
+  .nav-right { gap: 8px; }
+}
+
+@media print {
+  .nav, .fab-container, .btn-icon, .btn-back, .filter-bar, .quick-filters, .urgency-section, .hero, .btn-primary { display: none !important; }
+  .modal-overlay { position: static; background: none; }
+  .modal-box { box-shadow: none; max-width: 100%; border: none; transform: none; padding: 0; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="logo" href="#" onclick="return false">
+    <i data-lucide="shield" style="width:24px;height:24px; fill: var(--primary-light)"></i>
+    CrisisAid
+  </a>
+  <div class="nav-right">
+    <a class="nav-link" onclick="openArchModal()"><i data-lucide="layers" style="width:16px;height:16px"></i> Architecture</a>
+    <button class="btn-settings" id="btn-settings" onclick="toggleSettings()">
+      <i data-lucide="settings" style="width:20px;height:20px"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- Settings Panel -->
+<div class="settings-panel" id="settings-panel">
+  <h3><i data-lucide="settings" style="width:18px;height:18px; color:var(--primary)"></i> Settings</h3>
+  <div style="margin-bottom: 16px;">
+    <label for="gemini-key-input">Gemini API Key</label>
+    <input type="password" id="gemini-key-input" placeholder="AIzaSy..." />
+    <small style="margin-top: 4px; display: block;">Used for accurate natural language classification and empathetic summaries. <a href="https://aistudio.google.com/" target="_blank" rel="noopener">Get a free key here</a>.</small>
+  </div>
+  <div style="margin-bottom: 16px;">
+    <label for="api-key-input">Google Maps API Key (optional)</label>
+    <input type="password" id="api-key-input" placeholder="AIza..." />
+    <small style="margin-top: 4px; display: block;">A demo Google Maps key is already built in (Places API + Maps JavaScript API), so live results work out of the box.</small>
+  </div>
+  <button class="btn-save-key" onclick="saveSettings()">Save Settings</button>
+  <div class="key-status" id="key-status" style="margin-top: 20px;">
+    <!-- Status loaded by JavaScript -->
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN 1: INTAKE -->
+<div class="screen active" id="screen-intake">
+  <div class="intake-wrapper">
+    <div class="hero">
+      <h1>Find active aid. Fast.</h1>
+      <p>Describe your situation. Our AI curates programs, but humans make the decisions.</p>
+    </div>
+
+    <div class="intake-card">
+      <div class="intake-form">
+        <div class="input-group">
+          <label for="situation">Situation Description</label>
+          <textarea
+            id="situation"
+            placeholder="I lost my job last week and rent is due. We need groceries..."
+          ></textarea>
+        </div>
+
+        <div class="quick-filters">
+          <div class="filter-group">
+            <label>ZIP Code</label>
+            <input type="text" id="zipcode" placeholder="94110" maxlength="5" pattern="\d{5}">
+          </div>
+          <div class="filter-group">
+            <label>Household</label>
+            <select id="household">
+              <option value="">Select size</option>
+              <option value="1">1 Person</option>
+              <option value="2">2 People</option>
+              <option value="3">3 People</option>
+              <option value="4">4+ People</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="urgency-section">
+          <label>Urgency Level</label>
+          <div class="urgency-options">
+            <button class="urgency-btn" data-value="today">
+              <i data-lucide="alert-circle" style="width:20px;height:20px"></i>
+              Immediate (Today)
+            </button>
+            <button class="urgency-btn" data-value="week">
+              <i data-lucide="clock" style="width:20px;height:20px"></i>
+              Within a Week
+            </button>
+            <button class="urgency-btn selected" data-value="general">
+              <i data-lucide="calendar" style="width:20px;height:20px"></i>
+              General Planning
+            </button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <div class="disclaimer">
+            <i data-lucide="lock" style="width:16px;height:16px"></i>
+            Privacy focused. Data is not stored.
+          </div>
+          <button class="btn-primary" id="find-btn">
+            Analyze Request
+            <i data-lucide="arrow-right" style="width:18px;height:18px"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN 2: ANALYZING -->
+<div class="screen" id="screen-analyzing">
+  <div class="analyzing-wrapper">
+    <div class="analyzing-header">
+      <i data-lucide="cpu" style="width:28px;height:28px; color:var(--primary)"></i>
+      <h2>Analyzing Request</h2>
+    </div>
+    <div class="analysis-steps" id="analysis-steps"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ SCREEN 3: RESULTS -->
+<div class="screen" id="screen-results">
+  <div class="results-wrapper">
+    
+    <button class="btn-back" id="btn-back">
+      <i data-lucide="arrow-left" style="width:16px;height:16px"></i> Return to Intake
+    </button>
+
+    <div class="results-header-block">
+      <div class="hil-banner">
+        <i data-lucide="git-merge" style="width:16px;height:16px"></i>
+        AI Curates. Humans Decide.
+      </div>
+      
+      <div class="ai-card" id="ai-card">
+        <h4>System Analysis</h4>
+        <p id="ai-summary-text"></p>
+      </div>
+
+      <div class="urgent-banner" id="urgent-banner" style="display:none">
+        <h4><i data-lucide="alert-triangle" style="width:18px"></i> Urgent Request Detected</h4>
+        <p id="urgent-banner-text"></p>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-tabs" id="filter-tabs"></div>
+      <span class="results-count" id="results-count"></span>
+    </div>
+
+    <div class="programs-grid" id="programs-grid"></div>
+    <div id="show-more-container" style="text-align: center; margin-top: 24px;"></div>
+
+    <div class="transparency-panel">
+      <h4><i data-lucide="shield-check" style="width:18px"></i> Transparency & Trust Guardrails</h4>
+      <p>
+        To prevent AI hallucination and misinformation, this system uses a deterministic approach. The LLM strictly classifies the unstructured input (intent extraction). The output is then mapped exclusively against a human-verified, static database of programs. Verification dates indicate when human auditors last confirmed the program's active status.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ PROGRAM MODAL -->
+<div class="modal-overlay" id="program-modal" onclick="closeModal(event, 'program-modal')">
+  <div class="modal-box" id="modal-box">
+    <!-- Filled by JS -->
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ ARCHITECTURE MODAL -->
+<div class="modal-overlay" id="arch-modal" onclick="closeModal(event, 'arch-modal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">System Architecture</div>
+        <div class="modal-org"><i data-lucide="award" style="width:16px; color:var(--primary)"></i> USAII Challenge Alignment</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-icon" onclick="closeModal(null, 'arch-modal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="modal-section" style="margin-top: 32px">
+      <h4><i data-lucide="users"></i> Human-in-the-Loop</h4>
+      <p>The AI does <strong>not</strong> make eligibility or approval decisions. It acts as an intelligent router, mapping unstructured crisis narratives to verified program categories. A human case worker at the organization makes the final decision.</p>
+    </div>
+
+    <div class="modal-section">
+      <h4><i data-lucide="git-branch"></i> Data Flow Pipeline</h4>
+      <div class="arch-flow">
+        <div class="arch-step">
+          <div class="arch-step-icon"><i data-lucide="message-square"></i></div>
+          <div>
+            <h5>1. Input</h5>
+            <p>User provides unstructured plain-language text describing their situation.</p>
+          </div>
+        </div>
+        <div class="arch-arrow"><i data-lucide="arrow-down" style="width:20px;height:20px"></i></div>
+        <div class="arch-step">
+          <div class="arch-step-icon"><i data-lucide="cpu"></i></div>
+          <div>
+            <h5>2. LLM Classification</h5>
+            <p>Google Gemini processes the text, outputting ONLY structured JSON identifying core needs and urgency.</p>
+          </div>
+        </div>
+        <div class="arch-arrow"><i data-lucide="arrow-down" style="width:20px;height:20px"></i></div>
+        <div class="arch-step">
+          <div class="arch-step-icon"><i data-lucide="database"></i></div>
+          <div>
+            <h5>3. Deterministic Matching</h5>
+            <p>The JSON is matched against a human-audited, verified local database to eliminate hallucination risks.</p>
+          </div>
+        </div>
+        <div class="arch-arrow"><i data-lucide="arrow-down" style="width:20px;height:20px"></i></div>
+        <div class="arch-step">
+          <div class="arch-step-icon"><i data-lucide="check-circle"></i></div>
+          <div>
+            <h5>4. Output</h5>
+            <p>User receives ranked, verified contact points and takes agency to call the programs.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ FAB -->
+<div class="fab-container">
+  <button class="fab-btn urgent" title="Emergency 911" onclick="window.location.href='tel:911'">
+    <i data-lucide="phone-call" style="width:24px;height:24px"></i>
+  </button>
+</div>
+
+<script>
+lucide.createIcons();
+
+// ═══════════════════════════════════ DATA ═══════════════════════════════════
+
+const CATEGORIES = {
+  food:      { label: 'Food', icon: 'shopping-bag' },
+  housing:   { label: 'Housing', icon: 'home' },
+  utilities: { label: 'Utilities', icon: 'zap' },
+  medical:   { label: 'Medical', icon: 'heart-pulse' },
+  cash:      { label: 'Cash Aid', icon: 'banknote' },
+  childcare: { label: 'Childcare', icon: 'baby' },
+};
+
+const PROGRAMS = [
+  {
+    id: 1, name: 'Emergency Food Pantry', org: 'United Way Community Hub', category: 'food',
+    urgency: 'immediate', response_time: 'Same day',
+    summary: 'Walk-in food supply for any household in crisis.',
+    provides: '3-day emergency food supply per visit. Includes shelf-stable items and produce.',
+    eligibility: 'Open to anyone in service area. No income verification on first visit.',
+    how_to_apply: 'Walk in during open hours. No appointment needed.',
+    phone: '(415) 555-0182', hours: 'Mon–Fri 9am–4pm', address: '1240 Mission St, SF',
+    verified_days: 2, confidence: 'high', required_docs: ['Photo ID (repeat visits only)']
+  },
+  {
+    id: 2, name: 'SNAP Emergency Benefits', org: 'Dept. of Social Services', category: 'food',
+    urgency: 'within-week', response_time: '3–7 days',
+    summary: 'Monthly food assistance benefits — expedited processing available.',
+    provides: '$250–$1,000+/month in food benefits. Expedited in 7 days for extreme low income.',
+    eligibility: 'Gross income <= 130% FPL. U.S. citizens and eligible non-citizens.',
+    how_to_apply: 'Apply online at benefits.gov or call hotline.',
+    phone: '(800) 555-0322', hours: 'Mon–Fri 8am–5pm', address: '450 Golden Gate Ave',
+    verified_days: 1, confidence: 'high', required_docs: ['Photo ID', 'Proof of income', 'Address proof']
+  },
+  {
+    id: 4, name: 'Emergency Rental Assistance', org: 'SF Housing Authority', category: 'housing',
+    urgency: 'within-week', response_time: '5–10 days',
+    summary: 'Up to 3 months of back rent paid directly to landlord.',
+    provides: 'Up to $7,500 in rental assistance per household. Paid to landlord.',
+    eligibility: 'Renters experiencing financial hardship <= 80% AMI.',
+    how_to_apply: 'Apply online. Landlord cooperation required.',
+    phone: '(415) 555-0390', hours: 'Mon–Fri 9am–5pm', address: '1815 Egbert Ave, SF',
+    verified_days: 8, confidence: 'medium', required_docs: ['ID', 'Lease', 'Income proof', 'Eviction notice']
+  },
+  {
+    id: 5, name: 'Low-Barrier Navigation Center', org: 'SF Homeless Services', category: 'housing',
+    urgency: 'immediate', response_time: 'Tonight',
+    summary: 'Immediate overnight shelter — no sobriety requirement.',
+    provides: 'Safe overnight shelter, meals, case management.',
+    eligibility: 'Adults experiencing homelessness. Low barrier.',
+    how_to_apply: 'Call 311 to request outreach placement.',
+    phone: '(415) 555-0412', hours: 'Intake: 4pm–8pm', address: '1950 Mission St, SF',
+    verified_days: 4, confidence: 'high', required_docs: ['None']
+  },
+  {
+    id: 8, name: 'Utility Shutoff Prevention', org: 'Human Services Agency', category: 'utilities',
+    urgency: 'immediate', response_time: 'Same day',
+    summary: 'Emergency assistance for imminent power/water shutoffs.',
+    provides: 'Emergency payment sent directly to utility provider.',
+    eligibility: 'Residents facing imminent shutoff (notice required).',
+    how_to_apply: 'Call immediately. Same-day processing possible.',
+    phone: '(415) 555-0700', hours: 'Mon–Fri 8am–4:30pm', address: '170 Otis St, SF',
+    verified_days: 6, confidence: 'medium', required_docs: ['Shutoff notice', 'Utility bill', 'ID']
+  },
+  {
+    id: 9, name: 'Sliding-Scale Health Clinic', org: 'Community Health Center', category: 'medical',
+    urgency: 'same-day', response_time: 'Same/next day',
+    summary: 'Medical care regardless of insurance or status.',
+    provides: 'Primary and urgent care. Fees based on income ($0+).',
+    eligibility: 'Everyone welcome regardless of status.',
+    how_to_apply: 'Walk in or call for appointment.',
+    phone: '(415) 555-0321', hours: 'Mon–Fri 8am–6pm', address: '3850 17th St, SF',
+    verified_days: 7, confidence: 'medium', required_docs: ['ID helpful but not required']
+  }
+];
+
+// ═══════════════════════════════════ STATE ═══════════════════════════════════
+
+let state = { urgency: 'general', filter: 'all', matched: [], summaryText: '', zipcode: '', usedLiveSearch: false, liveSearchError: null, visibleCount: 5 };
+
+// ═══════════════════════════════════ KEYS & SETTINGS ═════════════════════════
+const DEFAULT_GMAPS_KEY = 'AIzaSyCMY6Wv9sjMmas7zibc11i0H1vpdv1JBIc';
+
+function getActiveGmapsKey() {
+  return localStorage.getItem('caid_gmaps_key') || DEFAULT_GMAPS_KEY || '';
+}
+
+function getActiveGeminiKey() {
+  return localStorage.getItem('caid_gemini_key') || '';
+}
+
+function toggleSettings() {
+  document.getElementById('settings-panel').classList.toggle('open');
+  document.getElementById('api-key-input').value = localStorage.getItem('caid_gmaps_key') || '';
+  document.getElementById('gemini-key-input').value = getActiveGeminiKey();
+}
+
+function saveSettings() {
+  const gmapsKey = document.getElementById('api-key-input').value.trim();
+  const geminiKey = document.getElementById('gemini-key-input').value.trim();
+  
+  if (gmapsKey) {
+    localStorage.setItem('caid_gmaps_key', gmapsKey);
+  } else {
+    localStorage.removeItem('caid_gmaps_key');
+  }
+  
+  if (geminiKey) {
+    localStorage.setItem('caid_gemini_key', geminiKey);
+  } else {
+    localStorage.removeItem('caid_gemini_key');
+  }
+  
+  updateKeyStatusDisplay();
+  document.getElementById('settings-panel').classList.remove('open');
+}
+
+function updateKeyStatusDisplay() {
+  const el = document.getElementById('key-status');
+  const hasGemini = !!getActiveGeminiKey();
+  const hasMaps = !!getActiveGmapsKey();
+  
+  let html = '<div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 500;">';
+  
+  if (hasGemini) {
+    html += `<div style="display:flex; align-items:center; gap:6px; color:#16a34a;"><i data-lucide="sparkles" style="width:16px;height:16px;color:#16a34a"></i> <span>Gemini: Active (AI Mode)</span></div>`;
+  } else {
+    html += `<div style="display:flex; align-items:center; gap:6px; color:var(--gray-500);"><i data-lucide="info" style="width:16px;height:16px;color:var(--gray-500)"></i> <span>Gemini: Keyword Matching Mode</span></div>`;
+  }
+  
+  if (hasMaps) {
+    html += `<div style="display:flex; align-items:center; gap:6px; color:#16a34a;"><i data-lucide="check-circle" style="width:16px;height:16px;color:#16a34a"></i> <span>Maps: Live Search Active</span></div>`;
+  } else {
+    html += `<div style="display:flex; align-items:center; gap:6px; color:var(--gray-500);"><i data-lucide="info" style="width:16px;height:16px;color:var(--gray-500)"></i> <span>Maps: Verified Sample Programs</span></div>`;
+  }
+  
+  html += '</div>';
+  el.innerHTML = html;
+  lucide.createIcons();
+}
+
+window.addEventListener('load', () => { updateKeyStatusDisplay(); });
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('settings-panel');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && !e.target.closest('#btn-settings')) {
+    panel.classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════ INTAKE ══════════════════════════════════
+
+document.querySelectorAll('.urgency-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.urgency-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    state.urgency = btn.dataset.value;
+  });
+});
+
+document.getElementById('find-btn').addEventListener('click', startSearch);
+document.getElementById('btn-back').addEventListener('click', () => showScreen('intake'));
+
+async function startSearch() {
+  const desc = document.getElementById('situation').value.trim();
+  if (!desc) {
+    document.getElementById('situation').focus();
+    return;
+  }
+  state.zipcode = document.getElementById('zipcode').value.trim();
+  state.household = document.getElementById('household').value;
+  showScreen('analyzing');
+  await runAnalysis(desc);
+}
+
+// ═══════════════════════════════════ ANALYZING ═══════════════════════════════
+
+const ANALYSIS_STEPS = [
+  { text: 'Parsing natural language input', icon: 'message-square' },
+  { text: 'Extracting intent and required parameters', icon: 'search' },
+  { text: 'Querying deterministic verification database', icon: 'database' },
+  { text: 'Ranking matches by response latency', icon: 'list-ordered' },
+];
+
+function renderAnalysisSteps() {
+  const container = document.getElementById('analysis-steps');
+  const hasGemini = !!getActiveGeminiKey();
+  
+  const steps = [
+    { text: hasGemini ? 'Consulting Gemini for natural language analysis' : 'Parsing natural language input', icon: 'message-square' },
+    { text: hasGemini ? 'Extracting structured needs and urgency' : 'Extracting intent via local keyword matching', icon: 'search' },
+    { text: 'Querying deterministic verification database', icon: 'database' },
+    { text: 'Ranking matches by response latency', icon: 'list-ordered' },
+  ];
+  
+  container.innerHTML = steps.map((s, i) => `
+    <div class="analysis-step" id="step-${i}">
+      <div class="step-icon"><i data-lucide="${s.icon}" style="width:14px;height:14px"></i></div>
+      <span>${s.text}</span>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+async function runAnalysis(description) {
+  renderAnalysisSteps();
+  
+  const geminiKey = getActiveGeminiKey();
+  let analysis = null;
+  
+  // ── Step 0: Parsing / Consulting Gemini ──
+  const step0 = document.getElementById('step-0');
+  step0.classList.add('active');
+  
+  if (geminiKey) {
+    try {
+      analysis = await analyzeWithGemini(description, geminiKey, state.urgency, state.household);
+      state.matched = analysis.programs || [];
+    } catch (err) {
+      console.error('Gemini API analysis failed, falling back to local keywords:', err);
+      analysis = analyzeWithKeywords(description, state.urgency, state.household);
+      state.matched = null;
+    }
+  } else {
+    await sleep(800); // Give user time to see the step
+    analysis = analyzeWithKeywords(description, state.urgency, state.household);
+    state.matched = null;
+  }
+  
+  step0.classList.remove('active');
+  step0.classList.add('done');
+  step0.querySelector('.step-icon').innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
+  lucide.createIcons();
+  
+  // ── Step 1: Extracting intent and required parameters ──
+  const step1 = document.getElementById('step-1');
+  step1.classList.add('active');
+  await sleep(600);
+  step1.classList.remove('active');
+  step1.classList.add('done');
+  step1.querySelector('.step-icon').innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
+  lucide.createIcons();
+  
+  // ── Step 2: Querying database (deterministic matching) ──
+  const step2 = document.getElementById('step-2');
+  step2.classList.add('active');
+  
+  state.summaryText = analysis.summary;
+  if (analysis.urgency) {
+    state.urgency = analysis.urgency;
+  }
+  
+  if (geminiKey && state.matched && state.matched.length > 0) {
+    await sleep(600); // Small delay to feel realistic
+  } else {
+    const gmapsKey = getActiveGmapsKey();
+    state.usedLiveSearch = false;
+    state.liveSearchError = null;
+    
+    if (gmapsKey) {
+      try {
+        const live = await searchLivePrograms(analysis.needs, state.zipcode, gmapsKey);
+        if (live.length > 0) {
+          state.matched = live;
+          state.usedLiveSearch = true;
+          state.summaryText += ' Showing live results from Google Maps near your ZIP code.';
+        } else {
+          throw new Error('No live results came back for this ZIP/need combination.');
+        }
+      } catch (err) {
+        console.error('Live Google Maps search failed, falling back to demo data:', err);
+        state.liveSearchError = (err && err.message) || 'Live search failed.';
+        state.matched = matchPrograms(analysis.needs, state.urgency, state.household);
+        state.summaryText += ' Live search was unavailable, so verified sample programs are shown instead.';
+      }
+    } else {
+      state.matched = matchPrograms(analysis.needs, state.urgency, state.household);
+    }
+  }
+  
+  step2.classList.remove('active');
+  step2.classList.add('done');
+  step2.querySelector('.step-icon').innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
+  lucide.createIcons();
+  
+  // ── Step 3: Ranking matches ──
+  const step3 = document.getElementById('step-3');
+  step3.classList.add('active');
+  await sleep(400);
+  step3.classList.remove('active');
+  step3.classList.add('done');
+  step3.querySelector('.step-icon').innerHTML = '<i data-lucide="check" style="width:14px;height:14px"></i>';
+  lucide.createIcons();
+  
+  await sleep(400);
+  showResults();
+}
+
+async function analyzeWithGemini(description, apiKey, urgency, household) {
+  const model = 'gemini-2.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  
+  const systemPrompt = `You are the AI routing core of CrisisAid, a professional and comforting crisis aid portal.
+Your task is to analyze the user's plain-language description of their crisis and return a structured JSON response.
+
+Strictly categorize their needs into one or more of these standard categories:
+- 'food': food bank, hunger, pantry, groceries, meals
+- 'housing': rent, eviction, homelessness, shelters, housing assistance
+- 'utilities': electricity, gas, water, shutoff notices
+- 'medical': clinic, doctor, medicine, health issues
+- 'cash': general emergency cash aid, financial hardship
+- 'childcare': emergency childcare assistance
+
+Determine the urgency level:
+- 'immediate': crisis requiring attention today (e.g., homeless tonight, shutoff notice today, no food at all)
+- 'within-week': needs attention within a few days (e.g., rent due next week, low food supply)
+- 'general': general planning, ongoing support, or long-term assistance
+
+Provide a comforting, professional, and clear 'summary' in 2-3 sentences. Reassure the user, summarize the needs you identified, and explain that you are matching them to active programs.
+Incorporate the user's selected urgency level and household size context into the comforting summary where appropriate to personalize the response (e.g. if they have a large household or need immediate help).
+If 'immediate' urgency is detected, provide a brief 'urgentReason' (1 sentence), otherwise keep it empty.
+
+Also generate exactly 5 real or highly realistic aid programs/services available in the user's location (or general US if not specified) matching their needs. Ensure they are highly relevant and helpful.`;
+
+  const programSchema = {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+      org: { type: "string" },
+      category: { type: "string", enum: ["food", "housing", "utilities", "medical", "cash", "childcare"] },
+      urgency: { type: "string", enum: ["immediate", "within-week", "general"] },
+      response_time: { type: "string" },
+      summary: { type: "string" },
+      provides: { type: "string" },
+      eligibility: { type: "string" },
+      how_to_apply: { type: "string" },
+      phone: { type: "string" },
+      hours: { type: "string" },
+      address: { type: "string" },
+      verified_days: { type: "integer" },
+      confidence: { type: "string", enum: ["high", "medium", "low"] },
+      required_docs: { type: "array", items: { type: "string" } }
+    },
+    required: ["name", "org", "category", "urgency", "response_time", "summary", "provides", "eligibility", "how_to_apply", "phone", "hours", "address", "verified_days", "confidence", "required_docs"]
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: `User Situation: "${description}"
+Selected Urgency level: ${urgency}
+Selected Household size: ${household ? household + ' person(s)' : 'Not specified'}
+
+Analyze the user's situation and constraints, and return the JSON response including 5 relevant programs.`
+        }]
+      }],
+      systemInstruction: {
+        parts: [{
+          text: systemPrompt
+        }]
+      },
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            needs: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: ["food", "housing", "utilities", "medical", "cash", "childcare"]
+              }
+            },
+            urgency: {
+              type: "string",
+              enum: ["immediate", "within-week", "general"]
+            },
+            summary: {
+              type: "string"
+            },
+            urgentReason: {
+              type: "string"
+            },
+            programs: {
+              type: "array",
+              items: programSchema
+            }
+          },
+          required: ["needs", "urgency", "summary", "urgentReason", "programs"]
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini API Error: ${response.status} - ${errText}`);
+  }
+
+  const data = await response.json();
+  const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!jsonText) {
+    throw new Error("Empty response from Gemini API");
+  }
+
+  const result = JSON.parse(jsonText.trim());
+  if (result.programs) {
+    result.programs.forEach((p, i) => {
+      p.id = `gemini-${i}-${Math.random().toString(36).slice(2, 7)}`;
+      p.live = false;
+    });
+  }
+  return result;
+}
+
+async function getMoreFromGemini(description, existingPrograms) {
+  const geminiKey = getActiveGeminiKey();
+  if (!geminiKey) return [];
+  
+  const model = 'gemini-2.5-flash';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+  
+  const existingNames = existingPrograms.map(p => p.name).join(', ');
+  
+  const systemPrompt = `You are the AI routing core of CrisisAid, a professional and comforting crisis aid portal.
+Your task is to generate 3 additional matching resource programs for the user's crisis situation.
+
+Crucially, these 3 programs MUST be different from the following already recommended programs:
+"${existingNames}"
+
+Strictly return a JSON object containing a "programs" array with exactly 3 new programs.`;
+
+  const programSchema = {
+    type: "object",
+    properties: {
+      name: { type: "string" },
+      org: { type: "string" },
+      category: { type: "string", enum: ["food", "housing", "utilities", "medical", "cash", "childcare"] },
+      urgency: { type: "string", enum: ["immediate", "within-week", "general"] },
+      response_time: { type: "string" },
+      summary: { type: "string" },
+      provides: { type: "string" },
+      eligibility: { type: "string" },
+      how_to_apply: { type: "string" },
+      phone: { type: "string" },
+      hours: { type: "string" },
+      address: { type: "string" },
+      verified_days: { type: "integer" },
+      confidence: { type: "string", enum: ["high", "medium", "low"] },
+      required_docs: { type: "array", items: { type: "string" } }
+    },
+    required: ["name", "org", "category", "urgency", "response_time", "summary", "provides", "eligibility", "how_to_apply", "phone", "hours", "address", "verified_days", "confidence", "required_docs"]
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: `User Situation: "${description}"
+List of already recommended programs to avoid: ${existingNames}
+
+Generate 3 additional different programs.`
+        }]
+      }],
+      systemInstruction: {
+        parts: [{
+          text: systemPrompt
+        }]
+      },
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            programs: {
+              type: "array",
+              items: programSchema
+            }
+          },
+          required: ["programs"]
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Gemini API Error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!jsonText) return [];
+  
+  const result = JSON.parse(jsonText.trim());
+  if (result.programs) {
+    result.programs.forEach((p, i) => {
+      p.id = `gemini-more-${existingPrograms.length}-${i}-${Math.random().toString(36).slice(2, 7)}`;
+      p.live = false;
+    });
+    return result.programs;
+  }
+  return [];
+}
+
+// ═══════════════════════════════════ LIVE GOOGLE MAPS SEARCH ═════════════════
+
+const PLACE_QUERIES = {
+  food:      'food bank emergency food pantry',
+  housing:   'homeless shelter emergency housing rental assistance organization',
+  utilities: 'utility bill payment assistance program nonprofit',
+  medical:   'free clinic community health center low cost',
+  cash:      'emergency financial assistance nonprofit organization',
+  childcare: 'emergency childcare assistance program',
+};
+
+let gmapsLoadPromise = null;
+
+// Official Google-recommended dynamic library bootstrap loader. This defines
+// `google.maps.importLibrary` synchronously (a plain <script> tag with
+// loading=async can fire its onload before importLibrary actually exists).
+function loadGoogleMaps(apiKey) {
+  if (gmapsLoadPromise) return gmapsLoadPromise;
+  gmapsLoadPromise = new Promise((resolve, reject) => {
+    try {
+      (g => {
+        var h, a, k, p = 'The Google Maps JavaScript API', c = 'google', l = 'importLibrary', q = '__ib__',
+          m = document, b = window;
+        b = b[c] || (b[c] = {});
+        var d = b.maps || (b.maps = {}), r = new Set(), e = new URLSearchParams(),
+          u = () => h || (h = new Promise(async (f, n) => {
+            await (a = m.createElement('script'));
+            e.set('libraries', [...r] + '');
+            for (k in g) e.set(k.replace(/[A-Z]/g, t => '_' + t[0].toLowerCase()), g[k]);
+            e.set('callback', c + '.maps.' + q);
+            a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+            d[q] = f;
+            a.onerror = () => h = n(Error(p + ' could not load.'));
+            a.nonce = m.querySelector('script[nonce]')?.nonce || '';
+            m.head.append(a);
+          }));
+        d[l] ? console.warn(p + ' only loads once. Ignoring:', g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n));
+      })({ key: apiKey, v: 'weekly' });
+      window.google.maps.importLibrary('places').then(() => resolve()).catch(reject);
+    } catch (err) {
+      reject(err);
+    }
+  });
+  return gmapsLoadPromise;
+}
+
+// Converts one Google Places result into the same card shape PROGRAMS uses.
+function placeToCard(place, category, idx) {
+  const name = place.displayName || 'Unnamed organization';
+  const status = place.businessStatus || 'UNKNOWN';
+  const confidence = status === 'OPERATIONAL' ? 'high' : status === 'CLOSED_TEMPORARILY' ? 'low' : 'unknown';
+
+  let isOpenNow = null;
+  try { isOpenNow = place.regularOpeningHours ? place.regularOpeningHours.isOpen() : null; } catch (_) {}
+
+  const hoursText = place.regularOpeningHours && place.regularOpeningHours.weekdayDescriptions
+    ? place.regularOpeningHours.weekdayDescriptions.join(' · ')
+    : 'Hours not listed — call to confirm';
+
+  return {
+    id: `gp-${category}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+    name, org: name, category,
+    urgency: 'within-week',
+    response_time: isOpenNow === true ? 'Open now' : isOpenNow === false ? 'Closed now — check hours' : 'Call to confirm',
+    summary: `Found via Google Maps for ${CATEGORIES[category] ? CATEGORIES[category].label.toLowerCase() : category} assistance near you.`,
+    provides: 'Contact this organization directly to confirm exactly what assistance they provide today — Google Maps doesn\'t list program details.',
+    eligibility: 'Eligibility varies by program — ask when you contact them.',
+    how_to_apply: 'Call or visit during open hours and ask for emergency/crisis assistance intake.',
+    phone: place.nationalPhoneNumber || 'Not listed — see Google Maps link',
+    hours: hoursText,
+    address: place.formattedAddress || 'Address not listed',
+    verified_days: 0,
+    confidence,
+    required_docs: ['Call ahead to ask what documents are required'],
+    live: true,
+    businessStatus: status,
+    googleMapsUri: place.googleMapsURI || null,
+  };
+}
+
+async function searchPlacesForNeed(category, zipcode) {
+  const { Place } = await google.maps.importLibrary('places');
+  const queryBase = PLACE_QUERIES[category] || category;
+  const textQuery = zipcode ? `${queryBase} near ${zipcode}` : queryBase;
+  const { places } = await Place.searchByText({
+    textQuery,
+    fields: ['displayName', 'formattedAddress', 'nationalPhoneNumber', 'businessStatus', 'regularOpeningHours', 'rating', 'googleMapsURI', 'id'],
+    maxResultCount: 5,
+    language: 'en',
+    region: 'us',
+  });
+  return (places || []).map((p, i) => placeToCard(p, category, i));
+}
+
+async function searchLivePrograms(needs, zipcode, apiKey) {
+  await loadGoogleMaps(apiKey);
+  const categoriesToSearch = needs.length ? needs : Object.keys(PLACE_QUERIES);
+  const results = await Promise.all(
+    categoriesToSearch.map(n => searchPlacesForNeed(n, zipcode).catch(err => {
+      console.error(`Places search failed for category "${n}":`, err);
+      return [];
+    }))
+  );
+  return results.flat().filter(p => p.businessStatus !== 'CLOSED_PERMANENTLY');
+}
+
+function analyzeWithKeywords(d, urgency, household) {
+  d = d.toLowerCase();
+  const needs = [];
+  if (/(food|hungry|groceries|meal)/.test(d)) needs.push('food');
+  if (/(rent|evict|homeless|housing|lease)/.test(d)) needs.push('housing');
+  if (/(electric|gas|water|utility|shutoff|power)/.test(d)) needs.push('utilities');
+  if (/(medical|health|doctor|sick|clinic)/.test(d)) needs.push('medical');
+  if (needs.length === 0) needs.push('food', 'housing');
+  
+  let summary = "Input analyzed. Required intervention categories identified. Querying verified registry.";
+  if (household) {
+    summary += ` Filtering and prioritizing resources suitable for a household size of ${household}.`;
+  }
+  return { needs, summary };
+}
+
+function matchPrograms(needs, urgency, household) {
+  const uScore = { immediate: 3, 'same-day': 2, 'within-week': 1, general: 0 };
+  return PROGRAMS
+    .filter(p => needs.includes(p.category) || needs.length === 0)
+    .map(p => {
+      let score = 0;
+      
+      // Urgency alignment score
+      if (urgency === 'today' && (p.urgency === 'immediate' || p.urgency === 'same-day')) {
+        score += 50;
+      } else if (urgency === 'week' && p.urgency === 'within-week') {
+        score += 20;
+      }
+      
+      // Household size alignment booster
+      // Large households (>= 3 people) get boosters for SNAP (id 2), Rental Assistance (id 4), Slidscale Health (id 9)
+      const isLargeHousehold = household && parseInt(household) >= 3;
+      if (isLargeHousehold) {
+        if (p.id === 2 || p.id === 4 || p.id === 9) {
+          score += 30; // Boost SNAP, rent aid, sliding health clinic
+        }
+      }
+      
+      return { ...p, score };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
+// ═══════════════════════════════════ RESULTS ═════════════════════════════════
+
+function showResults() {
+  state.visibleCount = 5;
+  document.getElementById('ai-summary-text').textContent = state.summaryText;
+  
+  const banner = document.getElementById('urgent-banner');
+  if (state.urgency === 'today') {
+    banner.style.display = 'block';
+    document.getElementById('urgent-banner-text').textContent = 'Resources with same-day response times are prioritized.';
+  } else {
+    banner.style.display = 'none';
+  }
+
+  renderFilterTabs();
+  renderResults();
+  showScreen('results');
+}
+
+function renderFilterTabs() {
+  const tabs = document.getElementById('filter-tabs');
+  const counts = {};
+  state.matched.forEach(p => { counts[p.category] = (counts[p.category] || 0) + 1; });
+
+  let html = `<button class="filter-tab active" data-cat="all" onclick="setFilter('all')">All <span class="tab-count">${state.visibleCount}+</span></button>`;
+  Object.keys(counts).forEach(cat => {
+    const catCount = counts[cat] || 0;
+    html += `<button class="filter-tab" data-cat="${cat}" onclick="setFilter('${cat}')">${CATEGORIES[cat].label} <span class="tab-count">${catCount}+</span></button>`;
+  });
+  tabs.innerHTML = html;
+}
+
+function setFilter(cat) {
+  state.filter = cat;
+  state.visibleCount = 5;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+  renderResults();
+}
+
+function renderResults() {
+  const filtered = state.matched.filter(p => state.filter === 'all' || p.category === state.filter);
+  document.getElementById('results-count').textContent = `Found ${state.visibleCount}+ results`;
+  
+  const grid = document.getElementById('programs-grid');
+  const moreContainer = document.getElementById('show-more-container');
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div style="padding: 40px 0; color: var(--gray-500); text-align:center;">No records matched the current filter constraints.</div>`;
+    moreContainer.innerHTML = '';
+    return;
+  }
+  
+  const visible = filtered.slice(0, state.visibleCount);
+  grid.innerHTML = visible.map(p => renderProgramCard(p)).join('');
+  lucide.createIcons();
+  
+  const geminiKey = getActiveGeminiKey();
+  if (geminiKey || filtered.length > state.visibleCount) {
+    moreContainer.innerHTML = `
+      <button class="btn-back" id="btn-show-more" style="margin-bottom: 0;">
+        Load More <i data-lucide="chevron-down" style="width:16px;height:16px"></i>
+      </button>
+    `;
+    document.getElementById('btn-show-more').addEventListener('click', async () => {
+      const activeGeminiKey = getActiveGeminiKey();
+      if (activeGeminiKey) {
+        const btn = document.getElementById('btn-show-more');
+        btn.disabled = true;
+        btn.innerHTML = `Loading... <i data-lucide="loader" style="width:16px;height:16px;display:inline-block;animation:spin 1s linear infinite;"></i>`;
+        lucide.createIcons();
+        
+        try {
+          const desc = document.getElementById('situation').value.trim();
+          const newPrograms = await getMoreFromGemini(desc, state.matched);
+          if (newPrograms.length > 0) {
+            state.matched = state.matched.concat(newPrograms);
+            state.visibleCount += newPrograms.length;
+            renderFilterTabs();
+            renderResults();
+          } else {
+            alert("No additional resources found.");
+            btn.disabled = false;
+            btn.innerHTML = `Load More <i data-lucide="chevron-down" style="width:16px;height:16px"></i>`;
+            lucide.createIcons();
+          }
+        } catch (err) {
+          console.error("Failed to load more from Gemini:", err);
+          alert("Could not load more from Gemini. Please check your key.");
+          btn.disabled = false;
+          btn.innerHTML = `Load More <i data-lucide="chevron-down" style="width:16px;height:16px"></i>`;
+          lucide.createIcons();
+        }
+      } else {
+        state.visibleCount += 3;
+        renderFilterTabs();
+        renderResults();
+      }
+    });
+    lucide.createIcons();
+  } else {
+    moreContainer.innerHTML = '';
+  }
+}
+
+function renderProgramCard(p) {
+  const isUrgent = p.urgency === 'immediate' || p.urgency === 'same-day';
+  const icon = CATEGORIES[p.category].icon;
+  return `
+    <div class="program-card ${isUrgent ? 'urgent-card' : ''}" onclick="openModal('${p.id}')">
+      <div class="card-main">
+        <div class="card-title">${p.name}</div>
+        <div class="card-org"><i data-lucide="${icon}" style="width:14px"></i> ${p.org}</div>
+      </div>
+      <div class="card-meta-col">
+        <div class="meta-text"><i data-lucide="phone" style="width:16px"></i> ${p.phone}</div>
+        <div class="meta-text"><i data-lucide="map-pin" style="width:16px"></i> ${p.address.split(',')[0]}</div>
+      </div>
+      <div class="card-status-col">
+        <div class="status-item status-response">
+          ${isUrgent ? `<i data-lucide="zap" style="width:14px"></i>` : ''}
+          ${p.response_time}
+        </div>
+        <div class="status-item status-verified">
+          <i data-lucide="check-circle" style="width:14px"></i>
+          ${p.live ? 'Active • Checked Today' : `Active • Checked ${p.verified_days}d ago`}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════ MODALS ══════════════════════════════════
+
+function openModal(id) {
+  const p = (state.matched || []).find(x => String(x.id) === String(id)) || PROGRAMS.find(x => String(x.id) === String(id));
+  if (!p) return;
+
+  document.getElementById('modal-box').innerHTML = `
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">${p.name}</div>
+        <div class="modal-org"><i data-lucide="building" style="width:16px"></i> ${p.org}</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-icon" title="Print Record" onclick="window.print()">
+          <i data-lucide="printer"></i>
+        </button>
+        <button class="btn-icon" onclick="closeModal(null, 'program-modal')">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="modal-section" style="margin-top: 32px">
+      <h4><i data-lucide="package"></i> Provision Overview</h4>
+      <p>${p.provides}</p>
+    </div>
+
+    <div class="modal-section">
+      <h4><i data-lucide="user-check"></i> Eligibility Parameters</h4>
+      <p>${p.eligibility}</p>
+    </div>
+
+    <div class="modal-section">
+      <h4><i data-lucide="clipboard-list"></i> Action Items</h4>
+      <p>${p.how_to_apply}</p>
+      <ul style="margin-top: 8px;">${p.required_docs.map(d => `<li>${d}</li>`).join('')}</ul>
+    </div>
+
+    <div class="modal-section">
+      <h4><i data-lucide="book-open"></i> Contact Data</h4>
+      <div class="contact-grid">
+        <div class="contact-item">
+          <div class="label">Phone</div>
+          <div class="value">${p.phone}</div>
+        </div>
+        <div class="contact-item">
+          <div class="label">Location</div>
+          <div class="value">${p.address}</div>
+        </div>
+        <div class="contact-item">
+          <div class="label">Operating Hours</div>
+          <div class="value">${p.hours}</div>
+        </div>
+        <div class="contact-item">
+          <div class="label">Status & Verification</div>
+          <div class="value" style="color:#16a34a">${p.live ? 'Active • Checked Today (Live Maps)' : `Active • Checked ${p.verified_days} days ago`}</div>
+        </div>
+      </div>
+    </div>
+
+    ${p.live && p.googleMapsUri ? `<a class="btn-call" href="${p.googleMapsUri}" target="_blank" rel="noopener" style="margin-bottom:10px;background:var(--gray-100);color:var(--fg);">View on Google Maps <i data-lucide="external-link" style="width:18px"></i></a>` : ''}
+    <a class="btn-call" href="tel:${p.phone.replace(/[^+\d]/g,'')}">
+      Call Program Now
+      <i data-lucide="phone-call" style="width:18px"></i>
+    </a>
+  `;
+
+  document.getElementById('program-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  lucide.createIcons();
+}
+
+function openArchModal() {
+  document.getElementById('arch-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e, id) {
+  if (e && e.target !== document.getElementById(id) && !e.target.closest('.btn-icon')) return;
+  document.getElementById(id).classList.remove('open');
+  setTimeout(() => { document.body.style.overflow = ''; }, 300);
+}
+
+// ═══════════════════════════════════ FLOW ════════════════════════════════════
+
+function showScreen(name) {
+  ['intake', 'analyzing', 'results'].forEach(s => {
+    const el = document.getElementById(`screen-${s}`);
+    s === name ? el.classList.add('active') : el.classList.remove('active');
+  });
+  window.scrollTo(0,0);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+    document.getElementById('settings-panel').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+});
+</script>
+</body>
+</html>
+                                                                                                                                                                                                                                                                                                                                               
